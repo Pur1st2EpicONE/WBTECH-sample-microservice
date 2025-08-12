@@ -1,5 +1,0 @@
-package wbservice
-
-func main() {
-
-}
