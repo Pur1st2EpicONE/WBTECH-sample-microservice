@@ -1,4 +1,4 @@
-package wbservice
+package main
 
 func main() {
 
