@@ -3,7 +3,6 @@ package kafka
 import (
 	"log"
 	"strings"
-	"time"
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/repository"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -47,7 +46,10 @@ func newConsumerConfig(clusterHosts []string, consGroupID string) *kafka.ConfigM
 
 func (c *Consumer) Run(db repository.Storage) error {
 	for {
-		kafkaMsg, _ := c.consumer.ReadMessage(1 * time.Second)
+		kafkaMsg, err := c.consumer.ReadMessage(-1)
+		if err != nil {
+			return err
+		}
 		if err := c.handler.SaveOrder(kafkaMsg.Value, db); err != nil {
 			log.Printf("Failed to save order: %v", err)
 			continue
@@ -55,5 +57,6 @@ func (c *Consumer) Run(db repository.Storage) error {
 		if _, err := c.consumer.CommitMessage(kafkaMsg); err != nil {
 			log.Printf("Failed to commit offset: %v", err)
 		}
+
 	}
 }

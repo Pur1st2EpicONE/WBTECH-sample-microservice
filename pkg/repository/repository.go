@@ -6,7 +6,7 @@ import (
 )
 
 type Storer interface {
-	SaveOrder(order *model.Order) (int, error)
+	SaveOrder(order *model.Order) error
 }
 
 type Storage struct {

@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS payment (
     CONSTRAINT fk_payment_order_id FOREIGN KEY (order_id) REFERENCES order_table(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS items (
+CREATE TABLE IF NOT EXISTS item (
     id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     chrt_id INTEGER NOT NULL,
     track_number VARCHAR(255) NOT NULL,
@@ -56,5 +56,5 @@ CREATE TABLE IF NOT EXISTS items (
     brand VARCHAR(100) NOT NULL,
     status INTEGER NOT NULL,
     order_id INTEGER NOT NULL,
-    CONSTRAINT fk_items_order_id FOREIGN KEY (order_id) REFERENCES order_table(id) ON DELETE CASCADE
+    CONSTRAINT fk_item_order_id FOREIGN KEY (order_id) REFERENCES order_table(id) ON DELETE CASCADE
 );
