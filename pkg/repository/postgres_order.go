@@ -44,7 +44,7 @@ func (ps *PostgresStorer) SaveOrder(order *model.Order) error {
 func insertOrder(ctx context.Context, tx *sql.Tx, order *model.Order) (int, error) {
 	var id int
 	query := `
-	INSERT INTO order_table (
+	INSERT INTO orders (
 		order_uid, 
 		track_number, 
 		entry, 
@@ -94,7 +94,7 @@ func insertOrder(ctx context.Context, tx *sql.Tx, order *model.Order) (int, erro
 
 func insertDelivery(ctx context.Context, tx *sql.Tx, delivery model.Delivery, orderID int) error {
 	query := `
-	INSERT INTO delivery (
+	INSERT INTO deliveries (
 		order_id,
 		name,
 		phone, 
@@ -133,7 +133,7 @@ func insertDelivery(ctx context.Context, tx *sql.Tx, delivery model.Delivery, or
 func insertPayment(ctx context.Context, tx *sql.Tx, payment model.Payment, orderID int) error {
 	paymentTime := time.Unix(payment.PaymentDT, 0)
 	query := `
-	INSERT INTO payment (
+	INSERT INTO payments (
 		order_id,
 		transaction, 
 		request_id, 
@@ -180,7 +180,7 @@ func insertPayment(ctx context.Context, tx *sql.Tx, payment model.Payment, order
 
 func insertItem(ctx context.Context, tx *sql.Tx, item *model.Item, orderID int) error {
 	query := `
-	INSERT INTO item (
+	INSERT INTO items (
 		order_id,
 		chrt_id,
     	track_number,

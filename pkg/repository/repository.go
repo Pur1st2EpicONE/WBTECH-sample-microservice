@@ -7,6 +7,7 @@ import (
 
 type Storer interface {
 	SaveOrder(order *model.Order) error
+	Ping() error
 }
 
 type Storage struct {

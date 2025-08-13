@@ -3,10 +3,13 @@ package kafka
 import (
 	"log"
 	"strings"
+	"time"
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/repository"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
+
+const maxRetries = 3
 
 type Consumer struct {
 	consumer *kafka.Consumer
@@ -50,13 +53,26 @@ func (c *Consumer) Run(db repository.Storage) error {
 		if err != nil {
 			return err
 		}
-		if err := c.handler.SaveOrder(kafkaMsg.Value, db); err != nil {
-			log.Printf("Failed to save order: %v", err)
+		var lastErr error
+		retryCnt := 0
+		for retryCnt < maxRetries {
+			if err := c.handler.SaveOrder(kafkaMsg.Value, db); err != nil {
+				lastErr = err
+				retryCnt++
+				if retryCnt < maxRetries {
+					time.Sleep(5 * time.Second)
+					continue
+				}
+				break
+			}
+			if _, err := c.consumer.CommitMessage(kafkaMsg); err != nil {
+				log.Printf("failed to commit offset: %v", err)
+			}
+			break
+		}
+		if retryCnt >= maxRetries {
+			log.Printf("failed to get message after %d retries: %v", maxRetries, lastErr)
 			continue
 		}
-		if _, err := c.consumer.CommitMessage(kafkaMsg); err != nil {
-			log.Printf("Failed to commit offset: %v", err)
-		}
-
 	}
 }

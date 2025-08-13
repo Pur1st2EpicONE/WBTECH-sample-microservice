@@ -36,3 +36,7 @@ func ConnectPostgres(config Config) (*sqlx.DB, error) {
 	}
 	return db, nil
 }
+
+func (p *PostgresStorer) Ping() error {
+	return p.db.Ping()
+}
