@@ -1,34 +1,69 @@
 package postgres
 
 import (
+	"context"
+	"time"
+
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 )
 
 func (ps *PostgresStorer) GetOrder(orderUID string) (*models.Order, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	var orderId int
 	order := new(models.Order)
-	if err := queryOrder(ps, order, orderUID); err != nil {
+	if err := queryAllButItems(ctx, ps, order, orderUID, &orderId); err != nil {
 		return nil, err
 	}
-
+	if err := queryItems(ctx, ps, &order.Items, orderId); err != nil {
+		return nil, err
+	}
 	return order, nil
 }
 
-func queryOrder(ps *PostgresStorer, order *models.Order, orderUID string) error {
+func queryAllButItems(ctx context.Context, ps *PostgresStorer, order *models.Order, orderUID string, orderId *int) error {
 	query := `SELECT 
-		order_uid, 
-		track_number, 
-		entry, 
-		locale, 
-		internal_signature,
-		customer_id,
-		delivery_service,
-		shardkey,
-		sm_id,
-		date_created,
-		oof_shard
-		FROM orders WHERE order_uid=$1`
-	row := ps.db.QueryRow(query, orderUID)
-	if err := row.Scan(
+
+        orders.id, 
+        orders.order_uid, 
+        orders.track_number, 
+        orders.entry, 
+        orders.locale, 
+        orders.internal_signature,
+        orders.customer_id,
+        orders.delivery_service,
+        orders.shardkey,
+        orders.sm_id,
+        orders.date_created,
+        orders.oof_shard,
+
+        deliveries.name, 
+        deliveries.phone, 
+        deliveries.zip, 
+        deliveries.city, 
+        deliveries.address,
+        deliveries.region,
+        deliveries.email,
+
+        payments.transaction, 
+        payments.request_id, 
+        payments.currency, 
+        payments.provider, 
+        payments.amount,
+        payments.payment_dt,
+        payments.bank,
+        payments.delivery_cost,
+        payments.goods_total,
+        payments.custom_fee
+
+        FROM orders 
+        JOIN deliveries ON orders.id = deliveries.order_id
+        JOIN payments ON orders.id = payments.order_id
+        WHERE orders.order_uid = $1`
+
+	row := ps.db.QueryRowContext(ctx, query, orderUID)
+	return row.Scan(orderId,
+
 		&order.OrderUID,
 		&order.TrackNumber,
 		&order.Entry,
@@ -39,8 +74,70 @@ func queryOrder(ps *PostgresStorer, order *models.Order, orderUID string) error 
 		&order.ShardKey,
 		&order.SmID,
 		&order.DateCreated,
-		&order.OofShard); err != nil {
+		&order.OofShard,
+
+		&order.Delivery.Name,
+		&order.Delivery.Phone,
+		&order.Delivery.Zip,
+		&order.Delivery.City,
+		&order.Delivery.Address,
+		&order.Delivery.Region,
+		&order.Delivery.Email,
+
+		&order.Payment.Transaction,
+		&order.Payment.RequestID,
+		&order.Payment.Currency,
+		&order.Payment.Provider,
+		&order.Payment.Amount,
+		&order.Payment.PaymentDT,
+		&order.Payment.Bank,
+		&order.Payment.DeliveryCost,
+		&order.Payment.GoodsTotal,
+		&order.Payment.CustomFee,
+	)
+}
+
+func queryItems(ctx context.Context, ps *PostgresStorer, items *[]models.Item, orderId int) error {
+	query := `SELECT 
+        chrt_id,
+        track_number,
+        price,
+        rid,
+        name,
+        sale,
+        size,
+        total_price,
+        nm_id,
+        brand,
+        status
+        FROM items WHERE order_id = $1`
+
+	rows, err := ps.db.QueryContext(ctx, query, orderId)
+	if err != nil {
 		return err
 	}
-	return nil
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var item models.Item
+		err := rows.Scan(
+			&item.ChrtID,
+			&item.TrackNumber,
+			&item.Price,
+			&item.Rid,
+			&item.Name,
+			&item.Sale,
+			&item.Size,
+			&item.TotalPrice,
+			&item.NmID,
+			&item.Brand,
+			&item.Status,
+		)
+		if err != nil {
+			return err
+		}
+		*items = append(*items, item)
+	}
+	return rows.Err()
 }

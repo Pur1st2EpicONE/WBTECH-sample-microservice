@@ -16,21 +16,21 @@ func (ps *PostgresStorer) SaveOrder(order *models.Order) error {
 	if err != nil {
 		return err
 	}
-	orderID, err := insertOrder(ctx, tx, order)
+	orderId, err := insertOrder(ctx, tx, order)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
-	if err := insertDelivery(ctx, tx, &order.Delivery, orderID); err != nil {
+	if err := insertDelivery(ctx, tx, &order.Delivery, orderId); err != nil {
 		tx.Rollback()
 		return err
 	}
-	if err := insertPayment(ctx, tx, &order.Payment, orderID); err != nil {
+	if err := insertPayment(ctx, tx, &order.Payment, orderId); err != nil {
 		tx.Rollback()
 		return err
 	}
 	for i := range order.Items {
-		if err := insertItem(ctx, tx, &order.Items[i], orderID); err != nil {
+		if err := insertItem(ctx, tx, &order.Items[i], orderId); err != nil {
 			tx.Rollback()
 			return err
 		}
@@ -131,7 +131,6 @@ func insertDelivery(ctx context.Context, tx *sql.Tx, delivery *models.Delivery, 
 }
 
 func insertPayment(ctx context.Context, tx *sql.Tx, payment *models.Payment, orderID int) error {
-	paymentTime := time.Unix(payment.PaymentDT, 0)
 	query := `
 	INSERT INTO payments (
 		order_id,
@@ -169,7 +168,7 @@ func insertPayment(ctx context.Context, tx *sql.Tx, payment *models.Payment, ord
 		payment.Currency,
 		payment.Provider,
 		payment.Amount,
-		paymentTime,
+		payment.PaymentDT,
 		payment.Bank,
 		payment.DeliveryCost,
 		payment.GoodsTotal,
