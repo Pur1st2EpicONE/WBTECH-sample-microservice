@@ -1,4 +1,4 @@
-package repository
+package postgres
 
 import (
 	"context"
@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"time"
 
-	model "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 )
 
-func (ps *PostgresStorer) SaveOrder(order *model.Order) error {
+func (ps *PostgresStorer) SaveOrder(order *models.Order) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	tx, err := ps.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	tx, err := ps.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable}) // to ensure payment integrity
 	if err != nil {
 		return err
 	}
@@ -21,11 +21,11 @@ func (ps *PostgresStorer) SaveOrder(order *model.Order) error {
 		tx.Rollback()
 		return err
 	}
-	if err := insertDelivery(ctx, tx, order.Delivery, orderID); err != nil {
+	if err := insertDelivery(ctx, tx, &order.Delivery, orderID); err != nil {
 		tx.Rollback()
 		return err
 	}
-	if err := insertPayment(ctx, tx, order.Payment, orderID); err != nil {
+	if err := insertPayment(ctx, tx, &order.Payment, orderID); err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -36,12 +36,12 @@ func (ps *PostgresStorer) SaveOrder(order *model.Order) error {
 		}
 	}
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("commit failed: %w", err)
+		return fmt.Errorf("commit failed: %v", err)
 	}
 	return nil
 }
 
-func insertOrder(ctx context.Context, tx *sql.Tx, order *model.Order) (int, error) {
+func insertOrder(ctx context.Context, tx *sql.Tx, order *models.Order) (int, error) {
 	var id int
 	query := `
 	INSERT INTO orders (
@@ -92,7 +92,7 @@ func insertOrder(ctx context.Context, tx *sql.Tx, order *model.Order) (int, erro
 	return id, nil
 }
 
-func insertDelivery(ctx context.Context, tx *sql.Tx, delivery model.Delivery, orderID int) error {
+func insertDelivery(ctx context.Context, tx *sql.Tx, delivery *models.Delivery, orderID int) error {
 	query := `
 	INSERT INTO deliveries (
 		order_id,
@@ -130,7 +130,7 @@ func insertDelivery(ctx context.Context, tx *sql.Tx, delivery model.Delivery, or
 	return err
 }
 
-func insertPayment(ctx context.Context, tx *sql.Tx, payment model.Payment, orderID int) error {
+func insertPayment(ctx context.Context, tx *sql.Tx, payment *models.Payment, orderID int) error {
 	paymentTime := time.Unix(payment.PaymentDT, 0)
 	query := `
 	INSERT INTO payments (
@@ -178,7 +178,7 @@ func insertPayment(ctx context.Context, tx *sql.Tx, payment model.Payment, order
 	return err
 }
 
-func insertItem(ctx context.Context, tx *sql.Tx, item *model.Item, orderID int) error {
+func insertItem(ctx context.Context, tx *sql.Tx, item *models.Item, orderID int) error {
 	query := `
 	INSERT INTO items (
 		order_id,

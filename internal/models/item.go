@@ -1,4 +1,4 @@
-package model
+package models
 
 type Item struct {
 	ChrtID      int     `json:"chrt_id"`

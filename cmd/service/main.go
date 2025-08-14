@@ -7,6 +7,7 @@ import (
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/kafka"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/repository"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/repository/postgres"
 )
 
 func main() {
@@ -14,7 +15,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create consumer: %v", err)
 	}
-	config := repository.Config{
+	config := postgres.PgConfig{
 		Host:     "localhost",
 		Port:     "5433",
 		Username: "postgres",
@@ -22,7 +23,7 @@ func main() {
 		DBName:   "postgres",
 		SSLMode:  "disable",
 	}
-	db, err := repository.ConnectPostgres(config)
+	db, err := postgres.ConnectPostgres(config)
 	if err != nil {
 		log.Fatalf("Database connection failed: %v", err)
 	}

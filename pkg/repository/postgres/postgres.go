@@ -1,4 +1,4 @@
-package repository
+package postgres
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ func NewPostgresStorer(db *sqlx.DB) *PostgresStorer {
 	return &PostgresStorer{db: db}
 }
 
-type Config struct {
+type PgConfig struct {
 	Host     string
 	Port     string
 	Username string
@@ -24,7 +24,7 @@ type Config struct {
 	SSLMode  string
 }
 
-func ConnectPostgres(config Config) (*sqlx.DB, error) {
+func ConnectPostgres(config PgConfig) (*sqlx.DB, error) {
 	db, err := sqlx.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		config.Host, config.Port, config.Username, config.Password, config.DBName, config.SSLMode))
 	if err != nil {

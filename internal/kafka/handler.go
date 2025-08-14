@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	model "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/repository"
 )
 
@@ -16,7 +16,7 @@ func NewOrderHandler() *OrderHandler {
 }
 
 func (h *OrderHandler) SaveOrder(jsonMsg []byte, db repository.Storage) error {
-	order := new(model.Order)
+	order := new(models.Order)
 	if err := json.Unmarshal(jsonMsg, order); err != nil {
 		return fmt.Errorf("failed to unmarshal the order: %v", err)
 	}

@@ -1,12 +1,14 @@
 package repository
 
 import (
-	model "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/repository/postgres"
 	"github.com/jmoiron/sqlx"
 )
 
 type Storer interface {
-	SaveOrder(order *model.Order) error
+	SaveOrder(order *models.Order) error
+	GetOrder(id string) (*models.Order, error)
 	Ping() error
 }
 
@@ -15,5 +17,5 @@ type Storage struct {
 }
 
 func NewStorage(db *sqlx.DB) *Storage {
-	return &Storage{Storer: NewPostgresStorer(db)}
+	return &Storage{Storer: postgres.NewPostgresStorer(db)}
 }
