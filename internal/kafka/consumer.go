@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/repository"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
@@ -47,7 +47,7 @@ func newConsumerConfig(clusterHosts []string, consGroupID string) *kafka.ConfigM
 	}
 }
 
-func (c *Consumer) Run(db repository.Storage) error {
+func (c *Consumer) Run(db *repository.Storage) error {
 	for {
 		kafkaMsg, err := c.consumer.ReadMessage(-1)
 		if err != nil {
@@ -56,7 +56,7 @@ func (c *Consumer) Run(db repository.Storage) error {
 		var lastErr error
 		retryCnt := 0
 		for retryCnt < maxRetries {
-			if err := c.handler.SaveOrder(kafkaMsg.Value, db); err != nil {
+			if err := c.handler.SaveOrder(kafkaMsg.Value, *db); err != nil {
 				lastErr = err
 				retryCnt++
 				if retryCnt < maxRetries {

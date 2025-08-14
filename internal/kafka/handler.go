@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/repository"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository"
 )
 
 type OrderHandler struct {

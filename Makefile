@@ -1,7 +1,12 @@
+.PHONY: all up create-topic run-service
+
+KAFKA_CONTAINER=kafka
+TOPIC_NAME=orders
+
 all: services db-load migrate-up create-topic run-service
 
 services:
-	@docker-compose up -d
+	docker-compose up -d
 	@echo "Waiting for Kafka to start..."
 	@sleep 10
 
@@ -13,7 +18,7 @@ create-topic:
 	@echo "Topic created"
 
 run-service:
-	@go run ./cmd/service/main.go
+	go run ./cmd/service/main.go
 
 migrate-up:
 	@migrate -path ./schema -database 'postgres://postgres:qwerty@localhost:5433/postgres?sslmode=disable' up
