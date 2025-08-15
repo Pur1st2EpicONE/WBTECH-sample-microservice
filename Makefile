@@ -18,7 +18,7 @@ create-topic:
 	@echo "Topic created"
 
 run-service:
-	go run ./cmd/service/main.go
+	go run ./cmd/order-service/main.go
 
 migrate-up:
 	@migrate -path ./schema -database 'postgres://postgres:qwerty@localhost:5433/postgres?sslmode=disable' up

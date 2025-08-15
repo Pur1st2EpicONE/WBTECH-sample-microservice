@@ -4,15 +4,17 @@ import (
 	"fmt"
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/kafka"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
 )
 
 func main() {
 	producer, err := kafka.NewProducer([]string{"localhost:9092"})
 	if err != nil {
-		fmt.Println(err)
+		logger.LogError("producer creation failed", err)
 	}
 	orders := getOrders()
-	for _, order := range orders {
+	for i, order := range orders {
+		logger.LogInfo(fmt.Sprintf("order-producer — sending order %d to Kafka", i))
 		producer.Produce(order, "orders")
 	}
 }

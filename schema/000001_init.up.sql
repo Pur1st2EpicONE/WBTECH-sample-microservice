@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS orders (
     track_number VARCHAR(255) UNIQUE NOT NULL,
     entry VARCHAR(255) NOT NULL,
     locale VARCHAR(10) NOT NULL,
-    internal_signature VARCHAR(255),
+    internal_signature VARCHAR(255) NULL,
     customer_id VARCHAR(255) NOT NULL,
     delivery_service VARCHAR(255) NOT NULL,
     shardkey VARCHAR(10) NOT NULL,
@@ -22,23 +22,23 @@ CREATE TABLE IF NOT EXISTS deliveries (
     address VARCHAR(255) NOT NULL,
     region VARCHAR(255) NOT NULL,
     email VARCHAR(100) NOT NULL,
-    order_id INTEGER NOT NULL,
+    order_id INTEGER UNIQUE NOT NULL,
     CONSTRAINT fk_delivery_order_id FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS payments (
     id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     transaction VARCHAR(255) NOT NULL,
-    request_id VARCHAR(255),
+    request_id VARCHAR(255) DEFAULT NULL,
     currency VARCHAR(10) NOT NULL,
     provider VARCHAR(50) NOT NULL,
     amount NUMERIC(10,2) NOT NULL,
     payment_dt TIMESTAMP NOT NULL,
-    bank VARCHAR(50),
+    bank VARCHAR(50) NULL,
     delivery_cost NUMERIC(10,2) NOT NULL,
     goods_total NUMERIC(10,2) NOT NULL,
-    custom_fee NUMERIC(10,2) NOT NULL,
-    order_id INTEGER NOT NULL,
+    custom_fee NUMERIC(10,2) NOT NULL DEFAULT 0,
+    order_id INTEGER UNIQUE NOT NULL,
     CONSTRAINT fk_payment_order_id FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 
@@ -49,8 +49,8 @@ CREATE TABLE IF NOT EXISTS items (
     price NUMERIC(10,2) NOT NULL,
     rid VARCHAR(255) NOT NULL,
     name VARCHAR(100) NOT NULL,
-    sale NUMERIC(10,2) NOT NULL,
-    size VARCHAR(10),
+    sale INTEGER NOT NULL DEFAULT 0,
+    size VARCHAR(10) DEFAULT NULL,
     total_price NUMERIC(10,2) NOT NULL,
     nm_id INTEGER NOT NULL,
     brand VARCHAR(100) NOT NULL,
@@ -58,3 +58,5 @@ CREATE TABLE IF NOT EXISTS items (
     order_id INTEGER NOT NULL,
     CONSTRAINT fk_item_order_id FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
+
+CREATE INDEX idx_items_order_id ON items(order_id);

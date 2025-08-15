@@ -1,10 +1,11 @@
 package kafka
 
 import (
-	"log"
+	"fmt"
 	"strings"
 	"time"
 
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
@@ -47,7 +48,7 @@ func newConsumerConfig(clusterHosts []string, consGroupID string) *kafka.ConfigM
 	}
 }
 
-func (c *Consumer) Run(db *repository.Storage) error {
+func (c *Consumer) Run(storage *repository.Storage) error {
 	for {
 		kafkaMsg, err := c.consumer.ReadMessage(-1)
 		if err != nil {
@@ -56,7 +57,7 @@ func (c *Consumer) Run(db *repository.Storage) error {
 		var lastErr error
 		retryCnt := 0
 		for retryCnt < maxRetries {
-			if err := c.handler.SaveOrder(kafkaMsg.Value, *db); err != nil {
+			if err := c.handler.SaveOrder(kafkaMsg.Value, *storage); err != nil {
 				lastErr = err
 				retryCnt++
 				if retryCnt < maxRetries {
@@ -66,13 +67,19 @@ func (c *Consumer) Run(db *repository.Storage) error {
 				break
 			}
 			if _, err := c.consumer.CommitMessage(kafkaMsg); err != nil {
-				log.Printf("failed to commit offset: %v", err)
+				logger.LogError("failed to commit offset:", err)
 			}
 			break
 		}
 		if retryCnt >= maxRetries {
-			log.Printf("failed to get message after %d retries: %v", maxRetries, lastErr)
+			logger.LogError(fmt.Sprintf("failed to get message after %d retries: %v", maxRetries, lastErr), lastErr)
 			continue
 		}
+	}
+}
+
+func (c *Consumer) RunConsumer(storage *repository.Storage) {
+	if err := c.Run(storage); err != nil {
+		logger.LogFatal("failed to run consumer: %v", err)
 	}
 }

@@ -3,18 +3,18 @@ package models
 import "time"
 
 type Order struct {
-	OrderUID          string    `json:"order_uid"`
-	TrackNumber       string    `json:"track_number"`
-	Entry             string    `json:"entry"`
-	Delivery          Delivery  `json:"delivery"`
-	Payment           Payment   `json:"payment"`
-	Items             []Item    `json:"items"`
-	Locale            string    `json:"locale"`
+	OrderUID          string    `json:"order_uid" binding:"required"`
+	TrackNumber       string    `json:"track_number" binding:"required"`
+	Entry             string    `json:"entry" binding:"required"`
+	Delivery          Delivery  `json:"delivery" binding:"required"`
+	Payment           Payment   `json:"payment" binding:"required"`
+	Items             []Item    `json:"items" binding:"required"`
+	Locale            string    `json:"locale" binding:"required"`
 	InternalSignature string    `json:"internal_signature"`
-	CustomerID        string    `json:"customer_id"`
-	DeliveryService   string    `json:"delivery_service"`
-	ShardKey          string    `json:"shardkey"`
-	SmID              int       `json:"sm_id"`
-	DateCreated       time.Time `json:"date_created"`
-	OofShard          string    `json:"oof_shard"`
+	CustomerID        string    `json:"customer_id" binding:"required"`
+	DeliveryService   string    `json:"delivery_service" binding:"required"`
+	ShardKey          string    `json:"shardkey" binding:"required"`
+	SmID              int       `json:"sm_id" binding:"required"`
+	DateCreated       time.Time `json:"date_created" binding:"required"`
+	OofShard          string    `json:"oof_shard" binding:"required"`
 }

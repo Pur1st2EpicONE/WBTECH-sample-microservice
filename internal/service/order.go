@@ -1,8 +1,6 @@
 package service
 
-import (
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
-)
+import "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 
 func (s *Service) GetOrder(orderID string) (*models.Order, bool, error) {
 	if order, found := s.cache.GetCachedOrder(orderID); found {
