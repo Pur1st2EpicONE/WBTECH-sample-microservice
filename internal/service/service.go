@@ -7,7 +7,7 @@ import (
 )
 
 type ServiceProvider interface {
-	GetOrder(orderID string) (*models.Order, error)
+	GetOrder(orderID string) (*models.Order, bool, error)
 }
 
 type Service struct {

@@ -4,14 +4,14 @@ import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 )
 
-func (s *Service) GetOrder(orderID string) (*models.Order, error) {
+func (s *Service) GetOrder(orderID string) (*models.Order, bool, error) {
 	if order, found := s.cache.GetCachedOrder(orderID); found {
-		return order, nil
+		return order, true, nil
 	}
 	order, err := s.Storage.GetOrder(orderID)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	s.cache.CacheOrder(order)
-	return order, nil
+	return order, false, nil
 }

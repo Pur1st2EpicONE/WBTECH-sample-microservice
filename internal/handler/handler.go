@@ -30,10 +30,15 @@ func (h *Handler) InitRoutes() *gin.Engine {
 
 func (h *Handler) getOrder(c *gin.Context) {
 	orderID := c.Param("orderId")
-	order, err := h.service.GetOrder(orderID)
+	order, fromCache, err := h.service.GetOrder(orderID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+	if fromCache {
+		c.Header("X-Cache", "HIT")
+	} else {
+		c.Header("X-Cache", "MISS") // I guess they never miss, huh? 💀
 	}
 	c.JSON(http.StatusOK, order)
 }
