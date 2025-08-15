@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -24,7 +25,7 @@ func LoadCache(storage *repository.Storage, orderTTL time.Duration) *Cache {
 	cachedOrders := make(map[string]*CachedOrder)
 	allOrders, err := storage.GetAllOrders()
 	if err != nil {
-		logger.LogError("cache load from database failed", err)
+		logger.LogError("cache — failed to load orders from database", err)
 		return &Cache{orders: cachedOrders, orderTTL: orderTTL}
 	}
 	logger.LogInfo("cache — load from database complete")
@@ -56,6 +57,38 @@ func (c *Cache) CacheOrder(order *models.Order) {
 		cachedOrder.lastAccess = time.Now()
 	} else {
 		c.orders[order.OrderUID] = &CachedOrder{order: order, lastAccess: time.Now()}
+		logger.LogInfo("cache — saved order", "orderUID", order.OrderUID)
 	}
+}
 
+func (c *Cache) CacheCleaner(ctx context.Context) {
+	logger.LogInfo("cache — cleaner started")
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			logger.LogInfo("cache — cleaner stopped")
+			return
+		case <-ticker.C:
+			logger.LogInfo("cache — starting cleanup cycle")
+			var expiredOrders []string
+			c.mu.RLock()
+			for orderUID, cached := range c.orders {
+				if time.Since(cached.lastAccess) > c.orderTTL {
+					expiredOrders = append(expiredOrders, orderUID)
+				}
+			}
+			c.mu.RUnlock()
+			if len(expiredOrders) > 0 {
+				c.mu.Lock()
+				for _, orderUID := range expiredOrders {
+					delete(c.orders, orderUID)
+					logger.LogInfo("cache — deleted order", "orderUID", orderUID)
+				}
+				c.mu.Unlock()
+			}
+			logger.LogInfo("cache — cache cleaned")
+		}
+	}
 }

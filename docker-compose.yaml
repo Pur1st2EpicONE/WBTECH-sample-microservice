@@ -4,7 +4,9 @@ services:
     image: postgres:latest
     container_name: postgres
     environment:
-      POSTGRES_PASSWORD: qwerty
+      POSTGRES_USER: Neo
+      POSTGRES_PASSWORD: "0451"
+      POSTGRES_DB: wb-service-db
     ports:
       - 5433:5432
     restart: on-failure
@@ -16,5 +18,3 @@ services:
       - 9092:9092
     depends_on:
       - postgres  
-
-

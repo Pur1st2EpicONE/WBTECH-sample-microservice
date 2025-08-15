@@ -49,11 +49,11 @@ func newConsumerConfig(clusterHosts []string, consGroupID string) *kafka.ConfigM
 }
 
 func (c *Consumer) Run(storage *repository.Storage) {
-	logger.LogInfo("consumer — starting to receive orders")
+	logger.LogInfo("consumer — receiving orders")
 	for {
 		kafkaMsg, err := c.consumer.ReadMessage(-1)
 		if err != nil {
-			logger.LogFatal("consumer failed to read message: %v", err)
+			logger.LogFatal("consumer — failed to read message: %v", err)
 		}
 		var lastErr error
 		retryCnt := 0
@@ -68,21 +68,21 @@ func (c *Consumer) Run(storage *repository.Storage) {
 				break
 			}
 			if _, err := c.consumer.CommitMessage(kafkaMsg); err != nil {
-				logger.LogError("failed to commit offset:", err)
+				logger.LogError("consumer — failed to commit offset:", err)
 			}
 			break
 		}
 		if retryCnt >= maxRetries {
-			logger.LogError(fmt.Sprintf("failed to get message after %d retries: %v", maxRetries, lastErr), lastErr)
+			logger.LogError(fmt.Sprintf("consumer — failed to get message after %d retries: %v", maxRetries, lastErr), lastErr)
 			continue
 		}
 	}
 }
 
 func (c *Consumer) Close() {
-	logger.LogInfo("consumer — received shutdown signal, stopping")
+	logger.LogInfo("consumer — stopping")
 	err := c.consumer.Close()
 	if err != nil {
-		logger.LogFatal("failed to stop consumer properly: %v", err)
+		logger.LogFatal("consumer — failed to stop properly: %v", err)
 	}
 }

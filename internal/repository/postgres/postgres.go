@@ -35,6 +35,7 @@ func ConnectPostgres(config PgConfig) (*sqlx.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+	logger.LogInfo("postgres — connected to database")
 	return db, nil
 }
 

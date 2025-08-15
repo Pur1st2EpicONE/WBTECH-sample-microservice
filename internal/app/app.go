@@ -7,6 +7,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/cache"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/config"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/kafka"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
@@ -16,61 +17,64 @@ import (
 )
 
 type App struct {
-	srv      *server.Server
-	consumer *kafka.Consumer
-	storage  *repository.Storage
+	srv           *server.Server
+	consumer      *kafka.Consumer
+	storage       *repository.Storage
+	ctx           context.Context
+	CancelContext context.CancelFunc
 }
 
 func New() *App {
 
 	db, err := postgres.ConnectPostgres(config.Pg)
 	if err != nil {
-		logger.LogFatal("failed to connect to database: %v", err)
+		logger.LogFatal("app — failed to connect to database: %v", err)
 	}
-	logger.LogInfo("postgres — connected to database")
 	storage := repository.NewStorage(db)
 
 	consumer, err := kafka.NewConsumer([]string{"localhost:9092"}, "orders", "orders")
 	if err != nil {
-		logger.LogFatal("failed to create consumer: %v", err)
+		logger.LogFatal("app — failed to create consumer: %v", err)
 	}
+	ctx, cancel := newContext()
+	cache := cache.LoadCache(storage, 20*time.Second)
+	go cache.CacheCleaner(ctx)
+	srv := server.NewServer(config.HTTPPort, cache, storage)
 
-	srv := server.NewServer(config.HTTPPort, storage)
-
-	return &App{srv: srv, consumer: consumer, storage: storage}
+	return &App{srv: srv, consumer: consumer, storage: storage, ctx: ctx, CancelContext: cancel}
 }
 
-func (a *App) NewContext() (context.Context, context.CancelFunc) {
+func newContext() (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(context.Background())
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		sig := <-sigCh
-		logger.LogInfo("app — received signal: " + sig.String() + ", cancelling context")
+		logger.LogInfo("app — received signal " + sig.String() + ", cancelling context")
 		cancel()
 	}()
 	return ctx, cancel
 }
 
-func (a *App) RunServer(ctx context.Context) {
+func (a *App) RunServer() {
 	go func() {
-		<-ctx.Done()
+		<-a.ctx.Done()
 		a.srv.Shutdown(context.Background())
 		a.storage.Close()
 	}()
-	a.srv.Run(ctx)
+	a.srv.Run(a.ctx)
 }
 
-func (a *App) RunConsumer(ctx context.Context) {
+func (a *App) RunConsumer() {
 	go func() {
-		<-ctx.Done()
+		<-a.ctx.Done()
 		a.consumer.Close()
-		logger.LogInfo("consumer stopped")
+		logger.LogInfo("app — consumer stopped")
 	}()
 	a.consumer.Run(a.storage)
 }
 
-func (a *App) Wait(ctx context.Context) {
-	<-ctx.Done()
+func (a *App) Wait() {
+	<-a.ctx.Done()
 	time.Sleep(1 * time.Second) // didn't want to clutter main with a wait group
 }

@@ -10,12 +10,11 @@ func main() {
 	defer logger.CloseFile(logger.OpenFile())
 	wbService := app.New()
 
-	ctx, cancel := wbService.NewContext()
-	defer cancel()
+	defer wbService.CancelContext()
 
-	go wbService.RunServer(ctx)
-	go wbService.RunConsumer(ctx)
+	go wbService.RunServer()
+	go wbService.RunConsumer()
 
-	wbService.Wait(ctx)
+	wbService.Wait()
 
 }
