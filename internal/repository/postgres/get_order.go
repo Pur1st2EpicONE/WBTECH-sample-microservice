@@ -146,3 +146,102 @@ func queryItems(ctx context.Context, ps *PostgresStorer, items *[]models.Item, o
 	}
 	return rows.Err()
 }
+
+func (ps *PostgresStorer) GetAllOrders() ([]*models.Order, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	query := `SELECT 
+
+        orders.id,
+        orders.order_uid, 
+        orders.track_number, 
+        orders.entry, 
+        orders.locale, 
+        orders.internal_signature,
+        orders.customer_id,
+        orders.delivery_service,
+        orders.shardkey,
+        orders.sm_id,
+        orders.date_created,
+        orders.oof_shard,
+
+        deliveries.name, 
+        deliveries.phone, 
+        deliveries.zip, 
+        deliveries.city, 
+        deliveries.address,
+        deliveries.region,
+        deliveries.email,
+
+        payments.transaction, 
+        payments.request_id, 
+        payments.currency, 
+        payments.provider, 
+        payments.amount,
+        payments.payment_dt,
+        payments.bank,
+        payments.delivery_cost,
+        payments.goods_total,
+        payments.custom_fee
+
+    FROM orders 
+    JOIN deliveries ON orders.id = deliveries.order_id
+    JOIN payments ON orders.id = payments.order_id`
+
+	rows, err := ps.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var orders []*models.Order
+	var orderId int
+
+	for rows.Next() {
+		order := new(models.Order)
+		var paymentTime time.Time
+
+		err := rows.Scan(&orderId,
+			&order.OrderUID,
+			&order.TrackNumber,
+			&order.Entry,
+			&order.Locale,
+			&order.InternalSignature,
+			&order.CustomerID,
+			&order.DeliveryService,
+			&order.ShardKey,
+			&order.SmID,
+			&order.DateCreated,
+			&order.OofShard,
+
+			&order.Delivery.Name,
+			&order.Delivery.Phone,
+			&order.Delivery.Zip,
+			&order.Delivery.City,
+			&order.Delivery.Address,
+			&order.Delivery.Region,
+			&order.Delivery.Email,
+
+			&order.Payment.Transaction,
+			&order.Payment.RequestID,
+			&order.Payment.Currency,
+			&order.Payment.Provider,
+			&order.Payment.Amount,
+			&paymentTime,
+			&order.Payment.Bank,
+			&order.Payment.DeliveryCost,
+			&order.Payment.GoodsTotal,
+			&order.Payment.CustomFee,
+		)
+		if err != nil {
+			return nil, err
+		}
+		order.Payment.PaymentDT = paymentTime.Unix()
+		if err := queryItems(ctx, ps, &order.Items, orderId); err != nil {
+			return nil, err
+		}
+		orders = append(orders, order)
+	}
+	return orders, rows.Err()
+}

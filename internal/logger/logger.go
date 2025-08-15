@@ -22,7 +22,9 @@ func OpenFile() *os.File {
 }
 
 func CloseFile(file *os.File) {
-	file.Close()
+	if err := file.Close(); err != nil {
+		slog.Error("log file failed to close properly")
+	}
 }
 
 func LogFatal(msg string, err error) {

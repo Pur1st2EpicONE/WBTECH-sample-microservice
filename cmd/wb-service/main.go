@@ -8,12 +8,14 @@ import (
 func main() {
 
 	defer logger.CloseFile(logger.OpenFile())
+	wbService := app.New()
 
-	orderService := app.New()
+	ctx, cancel := wbService.NewContext()
+	defer cancel()
 
-	go orderService.RunServer()
-	go orderService.RunConsumer()
+	go wbService.RunServer(ctx)
+	go wbService.RunConsumer(ctx)
 
-	orderService.WaitForShutdown()
+	wbService.Wait(ctx)
 
 }

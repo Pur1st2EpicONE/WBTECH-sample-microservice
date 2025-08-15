@@ -17,7 +17,7 @@ type Server struct {
 }
 
 func NewServer(port string, storage *repository.Storage) *Server {
-	cache := cache.NewCache(24 * time.Hour)
+	cache := cache.LoadCache(storage, 24*time.Hour)
 	service := service.NewService(storage, cache)
 	handler := handler.NewHandler(service)
 	router := handler.InitRoutes()
@@ -36,7 +36,8 @@ func (s *Server) serverConfig(port string, handler http.Handler) {
 	}
 }
 
-func (s *Server) Run() {
+func (s *Server) Run(ctx context.Context) {
+	logger.LogInfo("server — booting up")
 	err := s.httpServer.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		logger.LogFatal("server run failed", err)
@@ -44,5 +45,6 @@ func (s *Server) Run() {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
+	logger.LogInfo("server — shutting down")
 	return s.httpServer.Shutdown(ctx)
 }

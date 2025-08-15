@@ -3,6 +3,7 @@ package postgres
 import (
 	"fmt"
 
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
@@ -42,5 +43,6 @@ func (p *PostgresStorer) Ping() error {
 }
 
 func (p *PostgresStorer) Close() error {
+	logger.LogInfo("postgres — closing connection to database")
 	return p.db.Close()
 }

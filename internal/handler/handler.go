@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -32,7 +33,7 @@ func (h *Handler) getOrder(c *gin.Context) {
 	orderID := c.Param("orderId")
 	order, fromCache, err := h.service.GetOrder(orderID)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		logger.LogError("error getting the order", err)
 		return
 	}
 	if fromCache {

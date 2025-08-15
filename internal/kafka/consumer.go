@@ -48,11 +48,12 @@ func newConsumerConfig(clusterHosts []string, consGroupID string) *kafka.ConfigM
 	}
 }
 
-func (c *Consumer) Run(storage *repository.Storage) error {
+func (c *Consumer) Run(storage *repository.Storage) {
+	logger.LogInfo("consumer — starting to receive orders")
 	for {
 		kafkaMsg, err := c.consumer.ReadMessage(-1)
 		if err != nil {
-			return err
+			logger.LogFatal("consumer failed to read message: %v", err)
 		}
 		var lastErr error
 		retryCnt := 0
@@ -78,8 +79,10 @@ func (c *Consumer) Run(storage *repository.Storage) error {
 	}
 }
 
-func (c *Consumer) RunConsumer(storage *repository.Storage) {
-	if err := c.Run(storage); err != nil {
-		logger.LogFatal("failed to run consumer: %v", err)
+func (c *Consumer) Close() {
+	logger.LogInfo("consumer — received shutdown signal, stopping")
+	err := c.consumer.Close()
+	if err != nil {
+		logger.LogFatal("failed to stop consumer properly: %v", err)
 	}
 }

@@ -9,6 +9,7 @@ import (
 type Storer interface {
 	SaveOrder(order *models.Order) error
 	GetOrder(id string) (*models.Order, error)
+	GetAllOrders() ([]*models.Order, error)
 	Ping() error
 	Close() error
 }
