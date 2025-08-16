@@ -29,11 +29,11 @@ func ConnectPostgres(config PgConfig) (*sqlx.DB, error) {
 	db, err := sqlx.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		config.Host, config.Port, config.Username, config.Password, config.DBName, config.SSLMode))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("sqlx.Open failed to open database: %v", err)
 	}
 	err = db.Ping()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("lost connection to database: %v", err)
 	}
 	logger.LogInfo("postgres — connected to database")
 	return db, nil
@@ -44,6 +44,6 @@ func (p *PostgresStorer) Ping() error {
 }
 
 func (p *PostgresStorer) Close() error {
-	logger.LogInfo("postgres — closing connection to database")
+	logger.LogInfo("postgres — stopped")
 	return p.db.Close()
 }

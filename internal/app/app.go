@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -22,6 +23,7 @@ type App struct {
 	storage       *repository.Storage
 	ctx           context.Context
 	CancelContext context.CancelFunc
+	wg            *sync.WaitGroup
 }
 
 func New() *App {
@@ -36,12 +38,13 @@ func New() *App {
 	if err != nil {
 		logger.LogFatal("app — failed to create consumer: %v", err)
 	}
+	var wg sync.WaitGroup
 	ctx, cancel := newContext()
 	cache := cache.LoadCache(storage, 20*time.Second)
 	go cache.CacheCleaner(ctx)
 	srv := server.NewServer(config.HTTPPort, cache, storage)
 
-	return &App{srv: srv, consumer: consumer, storage: storage, ctx: ctx, CancelContext: cancel}
+	return &App{srv: srv, consumer: consumer, storage: storage, ctx: ctx, CancelContext: cancel, wg: &wg}
 }
 
 func newContext() (context.Context, context.CancelFunc) {
@@ -57,24 +60,27 @@ func newContext() (context.Context, context.CancelFunc) {
 }
 
 func (a *App) RunServer() {
+	a.wg.Add(1)
 	go func() {
+		defer a.wg.Done()
 		<-a.ctx.Done()
-		a.srv.Shutdown(context.Background())
-		a.storage.Close()
+		a.srv.Shutdown(a.ctx) // добавить лог ошибки
+		a.storage.Close()     // добавить лог ошибки
 	}()
 	a.srv.Run(a.ctx)
 }
 
 func (a *App) RunConsumer() {
+	a.wg.Add(1)
 	go func() {
+		defer a.wg.Done()
 		<-a.ctx.Done()
 		a.consumer.Close()
-		logger.LogInfo("app — consumer stopped")
 	}()
-	a.consumer.Run(a.storage)
+	a.consumer.Run(a.ctx, a.storage)
 }
 
 func (a *App) Wait() {
 	<-a.ctx.Done()
-	time.Sleep(1 * time.Second) // didn't want to clutter main with a wait group
+	a.wg.Wait()
 }

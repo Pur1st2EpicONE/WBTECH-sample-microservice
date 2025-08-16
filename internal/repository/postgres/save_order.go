@@ -14,29 +14,29 @@ func (ps *PostgresStorer) SaveOrder(order *models.Order) error {
 	defer cancel()
 	tx, err := ps.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable}) // to ensure payment integrity
 	if err != nil {
-		return err
+		return fmt.Errorf("postgres-storer — failed to start transaction: %v", err)
 	}
 	orderId, err := insertOrder(ctx, tx, order)
 	if err != nil {
 		tx.Rollback()
-		return err
+		return fmt.Errorf("postgres-storer — failed to insert order: %v", err)
 	}
 	if err := insertDelivery(ctx, tx, &order.Delivery, orderId); err != nil {
 		tx.Rollback()
-		return err
+		return fmt.Errorf("postgres-storer — failed to insert delivery: %v", err)
 	}
 	if err := insertPayment(ctx, tx, &order.Payment, orderId); err != nil {
 		tx.Rollback()
-		return err
+		return fmt.Errorf("postgres-storer — failed to insert payment: %v", err)
 	}
 	for i := range order.Items {
 		if err := insertItem(ctx, tx, &order.Items[i], orderId); err != nil {
 			tx.Rollback()
-			return err
+			return fmt.Errorf("postgres-storer — failed to insert item: %v", err)
 		}
 	}
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("commit failed: %v", err)
+		return fmt.Errorf("postgres-storer — transaction commit failed: %v", err)
 	}
 	return nil
 }
@@ -87,7 +87,7 @@ func insertOrder(ctx context.Context, tx *sql.Tx, order *models.Order) (int, err
 		order.DateCreated,
 		order.OofShard)
 	if err := row.Scan(&id); err != nil {
-		return id, err
+		return id, fmt.Errorf("row.Scan failed to get order id: %v", err)
 	}
 	return id, nil
 }

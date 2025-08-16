@@ -28,13 +28,13 @@ func CloseFile(file *os.File) {
 }
 
 func LogFatal(msg string, err error) {
-	slog.Error(msg, slog.String("err", err.Error()))
+	slog.Error(msg, slog.String("critical error", err.Error()))
 	os.Exit(1)
 }
 
 func LogError(msg string, err error) {
 	if err != nil {
-		slog.Error(msg, slog.String("err", err.Error()))
+		slog.Error(msg, slog.String("error", err.Error()))
 	} else {
 		slog.Error(msg)
 	}

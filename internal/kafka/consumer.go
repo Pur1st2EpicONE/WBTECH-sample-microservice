@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -14,7 +15,7 @@ const maxRetries = 3
 
 type Consumer struct {
 	consumer *kafka.Consumer
-	handler  *OrderHandler
+	handler  *PgHandler
 }
 
 func NewConsumer(clusterHosts []string, consGroupID string, topic string) (*Consumer, error) {
@@ -48,41 +49,49 @@ func newConsumerConfig(clusterHosts []string, consGroupID string) *kafka.ConfigM
 	}
 }
 
-func (c *Consumer) Run(storage *repository.Storage) {
+func (c *Consumer) Run(ctx context.Context, storage *repository.Storage) {
 	logger.LogInfo("consumer — receiving orders")
 	for {
-		kafkaMsg, err := c.consumer.ReadMessage(-1)
-		if err != nil {
-			logger.LogFatal("consumer — failed to read message: %v", err)
-		}
-		var lastErr error
-		retryCnt := 0
-		for retryCnt < maxRetries {
-			if err := c.handler.SaveOrder(kafkaMsg.Value, *storage); err != nil {
-				lastErr = err
-				retryCnt++
-				if retryCnt < maxRetries {
-					time.Sleep(5 * time.Second)
-					continue
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			event := c.consumer.Poll(100)
+			if event == nil {
+				continue
+			}
+			switch eventType := event.(type) {
+			case *kafka.Message:
+				var lastErr error
+				retryCnt := 0
+				for retryCnt < maxRetries {
+					if err := c.handler.SaveOrder(eventType.Value, *storage); err != nil {
+						lastErr = err
+						retryCnt++
+						if retryCnt < maxRetries {
+							time.Sleep(5 * time.Second)
+							continue
+						}
+						break
+					}
+					if _, err := c.consumer.CommitMessage(eventType); err != nil {
+						logger.LogError("consumer — failed to commit offset:", err)
+					}
+					break
 				}
-				break
+				if retryCnt >= maxRetries {
+					logger.LogError(fmt.Sprintf("consumer — failed to process message after %d retries: %v", maxRetries, lastErr), lastErr)
+				}
+			case kafka.Error:
+				logger.LogError("consumer — Kafka error:", eventType)
 			}
-			if _, err := c.consumer.CommitMessage(kafkaMsg); err != nil {
-				logger.LogError("consumer — failed to commit offset:", err)
-			}
-			break
-		}
-		if retryCnt >= maxRetries {
-			logger.LogError(fmt.Sprintf("consumer — failed to get message after %d retries: %v", maxRetries, lastErr), lastErr)
-			continue
 		}
 	}
 }
 
 func (c *Consumer) Close() {
-	logger.LogInfo("consumer — stopping")
-	err := c.consumer.Close()
-	if err != nil {
-		logger.LogFatal("consumer — failed to stop properly: %v", err)
+	if err := c.consumer.Close(); err != nil {
+		logger.LogError("consumer — failed to stop properly: %v", err)
 	}
+	logger.LogInfo("consumer — stopped")
 }

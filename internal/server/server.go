@@ -43,7 +43,9 @@ func (s *Server) Run(ctx context.Context) {
 	}
 }
 
-func (s *Server) Shutdown(ctx context.Context) error {
-	logger.LogInfo("server — shutting down")
-	return s.httpServer.Shutdown(ctx)
+func (s *Server) Shutdown(ctx context.Context) {
+	if err := s.httpServer.Shutdown(ctx); err != nil {
+		logger.LogError("server — failed to stop properly", err)
+	}
+	logger.LogInfo("server — shutdown complete")
 }
