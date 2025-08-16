@@ -1,11 +1,9 @@
 .PHONY: all up create-topic run-service
 
-KAFKA_CONTAINER=kafka
-TOPIC_NAME=orders
-
 all: services db-load migrate-up create-topic run-service
 
 services:
+	@cat .env.example > .env
 	@docker-compose up -d
 	@echo "Waiting for Kafka to start..."
 	@sleep 10
@@ -13,6 +11,7 @@ services:
 down:
 	@docker-compose down
 	@rm -rf ./logs
+	@rm -rf .env
 
 db-load:
 	@until docker exec postgres pg_isready -U Neo > /dev/null 2>&1; do sleep 0.5; done

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
@@ -38,9 +39,10 @@ func (s *Server) serverConfig(port string, handler http.Handler) {
 func (s *Server) Run(ctx context.Context) {
 	logger.LogInfo("server — receiving requests")
 	err := s.httpServer.ListenAndServe()
-	if err != nil && err != http.ErrServerClosed {
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.LogFatal("server — run failed", err)
 	}
+
 }
 
 func (s *Server) Shutdown(ctx context.Context) {

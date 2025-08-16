@@ -7,11 +7,11 @@ import (
 
 func OpenFile() *os.File {
 	if err := os.MkdirAll("./logs", 0777); err != nil {
-		LogFatal("failed to create log directory: %v", err)
+		LogFatal("logger — failed to create log directory: %v", err)
 	}
 	logFile, err := os.OpenFile("./logs/app.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0777)
 	if err != nil {
-		LogFatal("failed to create log file: %v", err)
+		LogFatal("logger — failed to create log file: %v", err)
 	}
 
 	handler := slog.NewJSONHandler(logFile, nil)
@@ -23,7 +23,7 @@ func OpenFile() *os.File {
 
 func CloseFile(file *os.File) {
 	if err := file.Close(); err != nil {
-		slog.Error("log file failed to close properly")
+		slog.Error("logger — log file failed to close properly")
 	}
 }
 

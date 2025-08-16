@@ -34,6 +34,7 @@ func (h *Handler) getOrder(c *gin.Context) {
 	order, fromCache, err := h.service.GetOrder(orderID)
 	if err != nil {
 		logger.LogError("error getting the order", err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid request data"})
 		return
 	}
 	if fromCache {

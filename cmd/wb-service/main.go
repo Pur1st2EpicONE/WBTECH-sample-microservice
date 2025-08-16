@@ -8,9 +8,9 @@ import (
 func main() {
 
 	defer logger.CloseFile(logger.OpenFile())
-	wbService := app.New()
+	wbService := app.Start()
 
-	defer wbService.CancelContext()
+	defer wbService.Stop()
 
 	go wbService.RunServer()
 	go wbService.RunConsumer()

@@ -11,7 +11,7 @@ type Storer interface {
 	GetOrder(id string) (*models.Order, error)
 	GetAllOrders() ([]*models.Order, error)
 	Ping() error
-	Close() error
+	Close()
 }
 
 type Storage struct {
