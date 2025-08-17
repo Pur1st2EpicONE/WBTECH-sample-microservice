@@ -27,11 +27,12 @@ kafka:
       - localhost:9092
     topic: orders
     client_id: order-producer
+    total_messages: 10
     acks: all
     retry_max: 3 
     linger_ms: 5
     batch_size: 65536
     compression_type: snappy
     enable_idempotence: true
-    total_messages: 10
+    
                  

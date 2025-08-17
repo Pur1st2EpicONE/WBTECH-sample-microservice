@@ -22,7 +22,6 @@ func main() {
 	if err != nil {
 		logger.LogFatal("producer — failed to load config", err)
 	}
-	fmt.Println(config.Kafka)
 
 	producer, err := broker.NewProducer(config)
 	if err != nil {

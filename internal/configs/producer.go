@@ -45,11 +45,13 @@ func ProdConfig() (Producer, error) {
 	}
 
 	return Producer{
-		Brokers:  viper.GetStringSlice("kafka.producer.brokers"),
-		ClientID: viper.GetString("kafka.producer.client_id"),
-		Kafka:    kafkaProdConfig(),
-		NATS:     nil,
-		RabbitMQ: nil,
+		Brokers:       viper.GetStringSlice("kafka.producer.brokers"),
+		Topic:         viper.GetString("kafka.producer.topic"),
+		ClientID:      viper.GetString("kafka.producer.client_id"),
+		TotalMessages: viper.GetInt("kafka.producer.total_messages"),
+		Kafka:         kafkaProdConfig(),
+		NATS:          nil,
+		RabbitMQ:      nil,
 	}, nil
 }
 
