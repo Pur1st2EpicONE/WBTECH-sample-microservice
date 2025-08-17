@@ -1,4 +1,4 @@
-package broker
+package kafka
 
 import (
 	"encoding/json"
@@ -19,7 +19,7 @@ func NewHandler() *Handler {
 	return new(Handler)
 }
 
-func (h *Handler) SaveOrder(jsonMsg []byte, storage repository.Storage) error { // rename
+func (h *Handler) SaveOrder(jsonMsg []byte, storage repository.Storage) error {
 	order := new(models.Order)
 	if err := json.Unmarshal(jsonMsg, order); err != nil {
 		return fmt.Errorf("consumer-handler — failed to unmarshal the order: %v", err)

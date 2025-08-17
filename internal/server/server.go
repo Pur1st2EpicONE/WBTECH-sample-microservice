@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/cache"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/handler"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository"
@@ -17,22 +17,22 @@ type Server struct {
 	httpServer *http.Server
 }
 
-func NewServer(port string, cache *cache.Cache, storage *repository.Storage) *Server {
+func NewServer(config configs.Server, cache *cache.Cache, storage *repository.Storage) *Server {
 	service := service.NewService(storage, cache)
 	handler := handler.NewHandler(service)
 	router := handler.InitRoutes()
 	server := new(Server)
-	server.serverConfig(port, router)
+	server.serverConfig(config, router)
 	return server
 }
 
-func (s *Server) serverConfig(port string, handler http.Handler) {
+func (s *Server) serverConfig(config configs.Server, handler http.Handler) {
 	s.httpServer = &http.Server{
-		Addr:           ":" + port,
+		Addr:           ":" + config.Port,
 		Handler:        handler,
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
-		MaxHeaderBytes: 1 << 20,
+		ReadTimeout:    config.ReadTimeout,
+		WriteTimeout:   config.WriteTimeout,
+		MaxHeaderBytes: config.MaxHeaderBytes,
 	}
 }
 

@@ -1,432 +1,533 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"math/big"
+	"os"
+	"strconv"
+	"time"
 
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/kafka"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/broker"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 )
 
 func main() {
-	producer, err := kafka.NewProducer([]string{"localhost:9092"})
+	amount := 10
+	checkArgs(&amount)
+	config, err := configs.ProdConfig()
 	if err != nil {
-		logger.LogError("producer creation failed", err)
+		logger.LogFatal("producer — failed to load config", err)
 	}
-	orders := getOrders()
+	producer, err := broker.NewProducer(config)
+	if err != nil {
+		logger.LogFatal("producer — creation failed", err)
+	}
+	orders := getOrders(amount)
 	for i, order := range orders {
-		logger.LogInfo(fmt.Sprintf("order-producer — sending order %d to Kafka", i))
-		producer.Produce(order, "orders")
+		orderJSONPretty, err := json.MarshalIndent(order, "", "   ")
+		if err != nil {
+			logger.LogFatal("producer — failed to marshal order with indent", err)
+		}
+		logger.LogInfo(fmt.Sprintf("order-producer — sending order %d to Kafka", i+1))
+		producer.Produce(orderJSONPretty, "orders")
 	}
 }
 
-func getOrders() []string {
-	orders := []string{
-		`{
-			"order_uid": "b563feb7b2b84b6test",
-			"track_number": "WBILMTESTTRACK",
-			"entry": "WBIL",
-			"delivery": {
-				"name": "Test Testov",
-				"phone": "+9720000000",
-				"zip": "2639809",
-				"city": "Kiryat Mozkin",
-				"address": "Ploshad Mira 15",
-				"region": "Kraiot",
-				"email": "test@gmail.com"
-			},
-			"payment": {
-				"transaction": "b563feb7b2b84b6test",
-				"request_id": "",
-				"currency": "USD",
-				"provider": "wbpay",
-				"amount": 1817,
-				"payment_dt": 1637907727,
-				"bank": "alpha",
-				"delivery_cost": 1500,
-				"goods_total": 317,
-				"custom_fee": 0
-			},
-			"items": [
-				{
-					"chrt_id": 9934930,
-					"track_number": "WBILMTESTTRACK",
-					"price": 453,
-					"rid": "ab4219087a764ae0btest",
-					"name": "Mascaras",
-					"sale": 30,
-					"size": "0",
-					"total_price": 317,
-					"nm_id": 2389212,
-					"brand": "Vivienne Sabo",
-					"status": 202
-				}
-			],
-			"locale": "en",
-			"internal_signature": "",
-			"customer_id": "test",
-			"delivery_service": "meest",
-			"shardkey": "9",
-			"sm_id": 99,
-			"date_created": "2021-11-26T06:22:19Z",
-			"oof_shard": "1"
-		}`,
-		`{
-			"order_uid": "b563feb7b2b84b7test",
-			"track_number": "WBILMTESTTRACK2",
-			"entry": "WBIL",
-			"delivery": {
-				"name": "Alice Smith",
-				"phone": "+9721111111",
-				"zip": "2639810",
-				"city": "Kiryat Mozkin",
-				"address": "Main St 12",
-				"region": "Kraiot",
-				"email": "alice@gmail.com"
-			},
-			"payment": {
-				"transaction": "b563feb7b2b84b7test",
-				"request_id": "",
-				"currency": "USD",
-				"provider": "wbpay",
-				"amount": 1200,
-				"payment_dt": 1637908727,
-				"bank": "alpha",
-				"delivery_cost": 500,
-				"goods_total": 700,
-				"custom_fee": 0
-			},
-			"items": [
-				{
-					"chrt_id": 9934931,
-					"track_number": "WBILMTESTTRACK2",
-					"price": 700,
-					"rid": "ab4219087a764ae1btest",
-					"name": "Lipstick",
-					"sale": 0,
-					"size": "0",
-					"total_price": 700,
-					"nm_id": 2389213,
-					"brand": "L’Oreal",
-					"status": 202
-				}
-			],
-			"locale": "en",
-			"internal_signature": "",
-			"customer_id": "alice",
-			"delivery_service": "dhl",
-			"shardkey": "2",
-			"sm_id": 50,
-			"date_created": "2021-11-27T10:12:00Z",
-			"oof_shard": "1"
-		}`,
-		`{
-			"order_uid": "b563feb7b2b84b8test",
-			"track_number": "WBILMTESTTRACK3",
-			"entry": "WBIL",
-			"delivery": {
-				"name": "Bob Johnson",
-				"phone": "+9722222222",
-				"zip": "2639811",
-				"city": "Kiryat Mozkin",
-				"address": "Park Ave 5",
-				"region": "Kraiot",
-				"email": "bob@gmail.com"
-			},
-			"payment": {
-				"transaction": "b563feb7b2b84b8test",
-				"request_id": "",
-				"currency": "USD",
-				"provider": "wbpay",
-				"amount": 2300,
-				"payment_dt": 1637910000,
-				"bank": "beta",
-				"delivery_cost": 300,
-				"goods_total": 2000,
-				"custom_fee": 0
-			},
-			"items": [
-				{
-					"chrt_id": 9934932,
-					"track_number": "WBILMTESTTRACK3",
-					"price": 2000,
-					"rid": "ab4219087a764ae2ctest",
-					"name": "Foundation",
-					"sale": 10,
-					"size": "0",
-					"total_price": 1800,
-					"nm_id": 2389214,
-					"brand": "Maybelline",
-					"status": 202
-				}
-			],
-			"locale": "en",
-			"internal_signature": "",
-			"customer_id": "bob",
-			"delivery_service": "ups",
-			"shardkey": "5",
-			"sm_id": 60,
-			"date_created": "2021-11-28T14:00:00Z",
-			"oof_shard": "2"
-		}`,
-		`{
-			"order_uid": "b563feb7b2b84b9test",
-			"track_number": "WBILMTESTTRACK4",
-			"entry": "WBIL",
-			"delivery": {
-				"name": "Charlie Brown",
-				"phone": "+9723333333",
-				"zip": "2639812",
-				"city": "Kiryat Mozkin",
-				"address": "Central St 8",
-				"region": "Kraiot",
-				"email": "charlie@gmail.com"
-			},
-			"payment": {
-				"transaction": "b563feb7b2b84b9test",
-				"request_id": "",
-				"currency": "USD",
-				"provider": "wbpay",
-				"amount": 1500,
-				"payment_dt": 1637911000,
-				"bank": "gamma",
-				"delivery_cost": 200,
-				"goods_total": 1300,
-				"custom_fee": 0
-			},
-			"items": [
-				{
-					"chrt_id": 9934933,
-					"track_number": "WBILMTESTTRACK4",
-					"price": 1300,
-					"rid": "ab4219087a764ae3dtest",
-					"name": "Eyeliner",
-					"sale": 0,
-					"size": "0",
-					"total_price": 1300,
-					"nm_id": 2389215,
-					"brand": "Rimmel",
-					"status": 202
-				}
-			],
-			"locale": "en",
-			"internal_signature": "",
-			"customer_id": "charlie",
-			"delivery_service": "fedex",
-			"shardkey": "7",
-			"sm_id": 70,
-			"date_created": "2021-11-29T09:30:00Z",
-			"oof_shard": "2"
-		}`,
-		`{
-			"order_uid": "b563feb7b2b84b10test",
-			"track_number": "WBILMTESTTRACK5",
-			"entry": "WBIL",
-			"delivery": {
-				"name": "Diana Prince",
-				"phone": "+9724444444",
-				"zip": "2639813",
-				"city": "Kiryat Mozkin",
-				"address": "Liberty St 20",
-				"region": "Kraiot",
-				"email": "diana@gmail.com"
-			},
-			"payment": {
-				"transaction": "b563feb7b2b84b10test",
-				"request_id": "",
-				"currency": "USD",
-				"provider": "wbpay",
-				"amount": 3200,
-				"payment_dt": 1637912000,
-				"bank": "delta",
-				"delivery_cost": 400,
-				"goods_total": 2800,
-				"custom_fee": 0
-			},
-			"items": [
-				{
-					"chrt_id": 9934934,
-					"track_number": "WBILMTESTTRACK5",
-					"price": 2800,
-					"rid": "ab4219087a764ae4etest",
-					"name": "Blush",
-					"sale": 10,
-					"size": "0",
-					"total_price": 2520,
-					"nm_id": 2389216,
-					"brand": "Sephora",
-					"status": 202
-				}
-			],
-			"locale": "en",
-			"internal_signature": "",
-			"customer_id": "diana",
-			"delivery_service": "dhl",
-			"shardkey": "3",
-			"sm_id": 80,
-			"date_created": "2021-11-30T12:00:00Z",
-			"oof_shard": "3"
-		}`,
-		`{
-			"order_uid": "b563feb7b2b84b11test",
-			"track_number": "WBILMTESTTRACK6",
-			"entry": "WBIL",
-			"delivery": {
-				"name": "Eve Adams",
-				"phone": "+9725555555",
-				"zip": "2639814",
-				"city": "Kiryat Mozkin",
-				"address": "Green St 4",
-				"region": "Kraiot",
-				"email": "eve@gmail.com"
-			},
-			"payment": {
-				"transaction": "b563feb7b2b84b11test",
-				"request_id": "",
-				"currency": "USD",
-				"provider": "wbpay",
-				"amount": 1450,
-				"payment_dt": 1637913000,
-				"bank": "omega",
-				"delivery_cost": 200,
-				"goods_total": 1250,
-				"custom_fee": 0
-			},
-			"items": [
-				{"chrt_id": 9934935,"track_number":"WBILMTESTTRACK6","price":500,"rid":"rid001","name":"Mascara","sale":10,"size":"0","total_price":450,"nm_id":2389217,"brand":"L’Oreal","status":202},
-				{"chrt_id": 9934936,"track_number":"WBILMTESTTRACK6","price":800,"rid":"rid002","name":"Lipstick","sale":20,"size":"0","total_price":640,"nm_id":2389218,"brand":"Maybelline","status":202},
-				{"chrt_id": 9934937,"track_number":"WBILMTESTTRACK6","price":100,"rid":"rid003","name":"Brush","sale":0,"size":"0","total_price":100,"nm_id":2389219,"brand":"Sephora","status":202}
-			],
-			"locale":"en","internal_signature":"","customer_id":"eve","delivery_service":"ups","shardkey":"1","sm_id":101,"date_created":"2021-12-01T08:00:00Z","oof_shard":"1"
-		}`,
-		`{
-			"order_uid": "b563feb7b2b84b12test",
-			"track_number": "WBILMTESTTRACK7",
-			"entry": "WBIL",
-			"delivery": {
-				"name": "Frank Miller",
-				"phone": "+9726666666",
-				"zip": "2639815",
-				"city": "Kiryat Mozkin",
-				"address": "Blue St 7",
-				"region": "Kraiot",
-				"email": "frank@gmail.com"
-			},
-			"payment": {
-				"transaction": "b563feb7b2b84b12test",
-				"request_id": "",
-				"currency": "USD",
-				"provider": "wbpay",
-				"amount": 2100,
-				"payment_dt": 1637914000,
-				"bank": "alpha",
-				"delivery_cost": 150,
-				"goods_total": 1950,
-				"custom_fee": 0
-			},
-			"items": [
-				{"chrt_id": 9934938,"track_number":"WBILMTESTTRACK7","price":1200,"rid":"rid004","name":"Perfume","sale":0,"size":"0","total_price":1200,"nm_id":2389220,"brand":"Chanel","status":202},
-				{"chrt_id": 9934939,"track_number":"WBILMTESTTRACK7","price":800,"rid":"rid005","name":"Eyeshadow","sale":10,"size":"0","total_price":720,"nm_id":2389221,"brand":"MAC","status":202},
-				{"chrt_id": 9934940,"track_number":"WBILMTESTTRACK7","price":50,"rid":"rid006","name":"Eyeliner","sale":0,"size":"0","total_price":50,"nm_id":2389222,"brand":"Sephora","status":202}
-			],
-			"locale":"en","internal_signature":"","customer_id":"frank","delivery_service":"dhl","shardkey":"3","sm_id":102,"date_created":"2021-12-02T09:30:00Z","oof_shard":"1"
-		}`,
-		`{
-			"order_uid": "b563feb7b2b84b13test",
-			"track_number": "WBILMTESTTRACK8",
-			"entry": "WBIL",
-			"delivery": {
-				"name": "Grace Lee",
-				"phone": "+9727777777",
-				"zip": "2639816",
-				"city": "Kiryat Mozkin",
-				"address": "Red St 10",
-				"region": "Kraiot",
-				"email": "grace@gmail.com"
-			},
-			"payment": {
-				"transaction": "b563feb7b2b84b13test",
-				"request_id": "",
-				"currency": "USD",
-				"provider": "wbpay",
-				"amount": 3050,
-				"payment_dt": 1637915000,
-				"bank": "beta",
-				"delivery_cost": 300,
-				"goods_total": 2750,
-				"custom_fee": 0
-			},
-			"items": [
-				{"chrt_id": 9934941,"track_number":"WBILMTESTTRACK8","price":1500,"rid":"rid007","name":"Foundation","sale":0,"size":"0","total_price":1500,"nm_id":2389223,"brand":"Maybelline","status":202},
-				{"chrt_id": 9934942,"track_number":"WBILMTESTTRACK8","price":1000,"rid":"rid008","name":"Blush","sale":10,"size":"0","total_price":900,"nm_id":2389224,"brand":"Sephora","status":202},
-				{"chrt_id": 9934943,"track_number":"WBILMTESTTRACK8","price":250,"rid":"rid009","name":"Mascara","sale":0,"size":"0","total_price":250,"nm_id":2389225,"brand":"L’Oreal","status":202},
-				{"chrt_id": 9934944,"track_number":"WBILMTESTTRACK8","price":200,"rid":"rid010","name":"Eyeliner","sale":0,"size":"0","total_price":200,"nm_id":2389226,"brand":"MAC","status":202}
-			],
-			"locale":"en","internal_signature":"","customer_id":"grace","delivery_service":"ups","shardkey":"2","sm_id":103,"date_created":"2021-12-03T11:00:00Z","oof_shard":"2"
-		}`,
-		`{
-			"order_uid": "b563feb7b2b84b14test",
-			"track_number": "WBILMTESTTRACK9",
-			"entry": "WBIL",
-			"delivery": {
-				"name": "Henry King",
-				"phone": "+9728888888",
-				"zip": "2639817",
-				"city": "Kiryat Mozkin",
-				"address": "Yellow St 3",
-				"region": "Kraiot",
-				"email": "henry@gmail.com"
-			},
-			"payment": {
-				"transaction": "b563feb7b2b84b14test",
-				"request_id": "",
-				"currency": "USD",
-				"provider": "wbpay",
-				"amount": 1700,
-				"payment_dt": 1637916000,
-				"bank": "gamma",
-				"delivery_cost": 150,
-				"goods_total": 1550,
-				"custom_fee": 0
-			},
-			"items": [
-				{"chrt_id": 9934945,"track_number":"WBILMTESTTRACK9","price":800,"rid":"rid011","name":"Lipstick","sale":0,"size":"0","total_price":800,"nm_id":2389227,"brand":"MAC","status":202},
-				{"chrt_id": 9934946,"track_number":"WBILMTESTTRACK9","price":750,"rid":"rid012","name":"Blush","sale":0,"size":"0","total_price":750,"nm_id":2389228,"brand":"Sephora","status":202}
-			],
-			"locale":"en","internal_signature":"","customer_id":"henry","delivery_service":"dhl","shardkey":"4","sm_id":104,"date_created":"2021-12-04T13:15:00Z","oof_shard":"2"
-		}`,
-		`{
-			"order_uid": "b563feb7b2b84b15test",
-			"track_number": "WBILMTESTTRACK10",
-			"entry": "WBIL",
-			"delivery": {
-				"name": "Ivy Watson",
-				"phone": "+9729999999",
-				"zip": "2639818",
-				"city": "Kiryat Mozkin",
-				"address": "White St 12",
-				"region": "Kraiot",
-				"email": "ivy@gmail.com"
-			},
-			"payment": {
-				"transaction": "b563feb7b2b84b15test",
-				"request_id": "",
-				"currency": "USD",
-				"provider": "wbpay",
-				"amount": 4000,
-				"payment_dt": 1637917000,
-				"bank": "delta",
-				"delivery_cost": 300,
-				"goods_total": 3700,
-				"custom_fee": 0
-			},
-			"items": [
-				{"chrt_id": 9934947,"track_number":"WBILMTESTTRACK10","price":1000,"rid":"rid013","name":"Foundation","sale":0,"size":"0","total_price":1000,"nm_id":2389229,"brand":"Maybelline","status":202},
-				{"chrt_id": 9934948,"track_number":"WBILMTESTTRACK10","price":1200,"rid":"rid014","name":"Mascara","sale":10,"size":"0","total_price":1080,"nm_id":2389230,"brand":"L’Oreal","status":202},
-				{"chrt_id": 9934949,"track_number":"WBILMTESTTRACK10","price":1500,"rid":"rid015","name":"Lipstick","sale":5,"size":"0","total_price":1425,"nm_id":2389231,"brand":"Sephora","status":202},
-				{"chrt_id": 9934950,"track_number":"WBILMTESTTRACK10","price":200,"rid":"rid016","name":"Brush","sale":0,"size":"0","total_price":200,"nm_id":2389232,"brand":"MAC","status":202}
-			],
-			"locale":"en","internal_signature":"","customer_id":"ivy","delivery_service":"ups","shardkey":"5","sm_id":105,"date_created":"2021-12-05T15:45:00Z","oof_shard":"3"
-		}`,
+func checkArgs(amount *int) {
+	if len(os.Args) > 1 {
+		newAmount, err := strconv.Atoi(os.Args[1])
+		if err != nil {
+			logger.LogError("producer — failed to convert argument to string", err)
+			*amount = 10
+		} else {
+			*amount = newAmount
+		}
+	}
+}
+
+func getOrders(amount int) []models.Order {
+	var orders []models.Order
+	for range amount {
+		orders = append(orders, createOrder())
 	}
 	return orders
+}
+
+func createOrder() models.Order {
+	var order models.Order
+
+	order.OrderUID = newOderUID()
+	order.TrackNumber = newTrackNumber()
+	order.Entry = "WBIL"
+	order.Delivery = createDelivery()
+	order.Payment = createPayment(order)
+	order.Items = createItems(order)
+	order.Locale = newLocale()
+	order.InternalSignature = ""
+	order.CustomerID = newCustomerID()
+	order.DeliveryService = newDeliveryService()
+	order.ShardKey = newShardKey()
+	order.SmID = newSmID()
+	order.DateCreated = newDateCreated()
+	order.OofShard = newOofShard()
+
+	return order
+}
+
+func createDelivery() models.Delivery {
+	var delivery models.Delivery
+
+	delivery.Name = newName()
+	delivery.Phone = newPhone()
+	delivery.Zip = newZip()
+	delivery.City = newCity()
+	delivery.Address = newAddress()
+	delivery.Region = newRegion()
+	delivery.Email = newEmail()
+
+	return delivery
+}
+
+func createPayment(order models.Order) models.Payment {
+	var payment models.Payment
+
+	payment.Transaction = order.OrderUID
+	payment.RequestID = ""
+	payment.Currency = newCurrency()
+	payment.Provider = "wbpay"
+	payment.Amount = newAmount()
+	payment.PaymentDT = 1637907727 // can't be bothered
+	payment.Bank = newBank()
+	payment.DeliveryCost = newDeliveryCost()
+	payment.GoodsTotal = newGoodsTotal()
+	payment.CustomFee = newCustomFee()
+
+	return payment
+}
+
+func createItems(order models.Order) []models.Item {
+	var items []models.Item
+	totalItems := totalItems()
+	for range totalItems {
+		items = append(items, newItem(order))
+	}
+	return items
+}
+
+func newItem(order models.Order) models.Item {
+	var item models.Item
+
+	item.ChrtID = newChrtId()
+	item.TrackNumber = order.TrackNumber
+	item.Price = newPrice()
+	item.Rid = newRid()
+	item.Name = newItemName()
+	item.Sale = newSale()
+	item.Size = newSize()
+	item.TotalPrice = newTotalPrice(item.Price, item.Sale)
+	item.NmID = newNmId()
+	item.Brand = newBrand()
+	item.Status = newStatus()
+
+	return item
+}
+
+func newOderUID() string {
+	bytes := make([]byte, 8)
+	rand.Read(bytes)
+	orderUID := hex.EncodeToString(bytes) + "test"
+	return orderUID
+}
+
+func newTrackNumber() string {
+	letters := []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	bytes := make([]byte, 9)
+	rand.Read(bytes)
+	for i := 0; i < 9; i++ {
+		bytes[i] = letters[int(bytes[i])%len(letters)]
+	}
+	return "WBILM" + string(bytes)
+}
+
+func newLocale() string {
+	locales := []string{"en", "ru", "de", "zh", "fr", "es", "it", "ja"}
+	number := big.NewInt(int64(len(locales)))
+	idx, err := rand.Int(rand.Reader, number)
+	if err != nil {
+		logger.LogFatal("newLocale — failed to create random number", err)
+	}
+	return locales[idx.Int64()]
+}
+
+func newCustomerID() string {
+	bytes := make([]byte, 8)
+	rand.Read(bytes)
+	id := hex.EncodeToString(bytes)
+	return id
+}
+
+func newDeliveryService() string {
+	names := []string{
+		"wildberries",
+		"meest",
+		"boxberry",
+		"hermes",
+		"ems",
+		"pickpoint",
+		"kurier",
+		"ozon",
+	}
+	number := big.NewInt(int64(len(names)))
+	idx, err := rand.Int(rand.Reader, number)
+	if err != nil {
+		logger.LogFatal("newDeliveryService — failed to create random number", err)
+	}
+	return names[idx.Int64()]
+}
+
+func newShardKey() string {
+	max := big.NewInt(10)
+	key, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		logger.LogFatal("newShardKey — failed to create random number", err)
+	}
+	return fmt.Sprintf("%d", key.Int64())
+}
+
+func newSmID() int {
+	max := big.NewInt(100)
+	id, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		logger.LogFatal("newSmID — failed to create random number", err)
+	}
+	return int(id.Int64())
+}
+
+func newDateCreated() time.Time {
+	return time.Now()
+}
+
+func newOofShard() string {
+	max := big.NewInt(100)
+	key, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		logger.LogFatal("newOofShard — failed to create random number", err)
+	}
+	return fmt.Sprintf("%d", key.Int64())
+}
+
+func newName() string {
+	names := []string{
+		"Test Testov",
+		"Max Payne",
+		"John Doe",
+		"Nikita Chetverkin",
+		"Martin Molin",
+		"Charlie White",
+		"Jeremy Jahns",
+		"Chris Stuckmann",
+		"Harrier Du Bois",
+		"Manuel Calavera",
+		"Demetrian Titus",
+		"Jill Valentine",
+		"Isaac Clarke",
+		"Gordon Freeman",
+	}
+	number := big.NewInt(int64(len(names)))
+	idx, err := rand.Int(rand.Reader, number)
+	if err != nil {
+		logger.LogFatal("newName — failed to create random number", err)
+	}
+	return names[idx.Int64()]
+}
+
+func newPhone() string {
+	const digits = "0123456789"
+	bytes := make([]byte, 10)
+	rand.Read(bytes)
+	for i := range bytes {
+		bytes[i] = digits[int(bytes[i])%len(digits)]
+	}
+	return "+9" + string(bytes)
+}
+
+func newZip() string {
+	const digits = "0123456789"
+	bytes := make([]byte, 7)
+	rand.Read(bytes)
+	for i := range bytes {
+		bytes[i] = digits[int(bytes[i])%len(digits)]
+	}
+	return string(bytes)
+}
+
+func newCity() string {
+	cities := []string{
+		"Raccoon City",
+		"Vice City",
+		"Los Santos",
+		"San Fierro",
+		"Las Venturas",
+		"Silent Hill",
+		"Gotham City",
+		"Metropolis",
+		"Night City",
+		"King's Landing",
+		"Bikini Bottom",
+		"Sin City",
+	}
+
+	number := big.NewInt(int64(len(cities)))
+	idx, err := rand.Int(rand.Reader, number)
+	if err != nil {
+		logger.LogFatal("newCity — failed to create random number", err)
+	}
+	return cities[idx.Int64()]
+}
+
+func newAddress() string {
+	addresses := []string{
+		"Ploshad Mira 15",
+		"Baker Street 221B",
+		"Sesame Street 123",
+		"Fleet Street 186",
+		"Grove Street 4",
+		"Elm Street 1428",
+		"Wall Street 12",
+		"Privet Drive 4",
+		"Mulholland Drive 17",
+	}
+	number := big.NewInt(int64(len(addresses)))
+	idx, err := rand.Int(rand.Reader, number)
+	if err != nil {
+		logger.LogFatal("newAddress — failed to create random number", err)
+	}
+	return addresses[idx.Int64()]
+}
+
+func newRegion() string {
+	regions := []string{
+		"California",
+		"Bavaria",
+		"Catalonia",
+		"Quebec",
+		"Scotland",
+		"Flanders",
+		"Lombardy",
+		"Kyushu",
+		"Queensland",
+		"Auckland",
+		"Rio de Janeiro",
+		"Buenos Aires Province",
+		"Gauteng",
+	}
+
+	number := big.NewInt(int64(len(regions)))
+	idx, err := rand.Int(rand.Reader, number)
+	if err != nil {
+		logger.LogFatal("newRegion — failed to create random number", err)
+	}
+	return regions[idx.Int64()]
+}
+
+func newEmail() string {
+	bytes := make([]byte, 4)
+	rand.Read(bytes)
+	mail := hex.EncodeToString(bytes) + "@gmail.com"
+	return mail
+}
+
+func newCurrency() string {
+	currencies := []string{"USD", "EUR", "GBP", "JPY", "CNY", "RUB", "AUD"}
+	number := big.NewInt(int64(len(currencies)))
+	idx, err := rand.Int(rand.Reader, number)
+	if err != nil {
+		logger.LogFatal("newCurrency — failed to create random number", err)
+	}
+	return currencies[idx.Int64()]
+}
+
+func newAmount() float64 {
+	max := big.NewInt(100000)
+	amount, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		logger.LogFatal("newAmount — failed to create random number", err)
+	}
+	return float64(amount.Int64()) / 100.0
+}
+
+func newBank() string {
+	banks := []string{"alpha", "sber", "vtb", "gazprombank", "bank of america", "deutsche bank", "chase", "santander"}
+	number := big.NewInt(int64(len(banks)))
+	idx, err := rand.Int(rand.Reader, number)
+	if err != nil {
+		logger.LogFatal("newBank — failed to create random number", err)
+	}
+	return banks[idx.Int64()]
+}
+
+func newDeliveryCost() float64 {
+	max := big.NewInt(5000)
+	cost, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		logger.LogFatal("newDeliveryCost — failed to create random number", err)
+	}
+	return float64(cost.Int64()) / 100.0
+}
+
+func newGoodsTotal() float64 {
+	max := big.NewInt(200000)
+	total, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		logger.LogFatal("newGoodsTotal — failed to create random number", err)
+	}
+	return float64(total.Int64()) / 100.0
+}
+
+func newCustomFee() float64 {
+	max := big.NewInt(10000)
+	fee, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		logger.LogFatal("newCustomFee — failed to create random number", err)
+	}
+	return float64(fee.Int64()) / 100.0
+}
+
+func totalItems() int64 {
+	max := big.NewInt(5)
+	total, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		logger.LogFatal("totalItems — failed to create random number", err)
+	}
+	return total.Int64()
+}
+func newChrtId() int {
+	id, err := rand.Int(rand.Reader, big.NewInt(10000000))
+	if err != nil {
+		logger.LogFatal("newChrtId — failed to create random number", err)
+	}
+	return int(id.Int64())
+}
+
+func newPrice() float64 {
+	price, err := rand.Int(rand.Reader, big.NewInt(5000))
+	if err != nil {
+		logger.LogFatal("newPrice — failed to create random number", err)
+	}
+	return float64(price.Int64())
+}
+
+func newRid() string {
+	bytes := make([]byte, 8)
+	rand.Read(bytes)
+	return hex.EncodeToString(bytes) + "test"
+}
+
+func newItemName() string {
+	items := []string{
+		"Lightsaber",
+		"The One Ring",
+		"Wand",
+		"Infinity Gauntlet",
+		"Mjolnir",
+		"Neuralyzer",
+		"Hoverboard",
+		"Portal Gun",
+		"Gravity Gun",
+		"Witcher Medallion",
+		"BFG 9000",
+		"Dragon Glass Dagger",
+		"Potion of Healing",
+		"Tesseract",
+		"Dragon Egg",
+		"Witcher Sword Silver",
+		"Witcher Sword Steel",
+		"Elder Scroll",
+		"Death Note",
+		"Wizard Staff",
+		"Samurai Armor",
+		"Holy Grail Cup",
+		"Red Pill",
+		"Blue Pill",
+		"Necronomicon",
+		"Sword of Gryffindor",
+		"Voldemort's Horcrux",
+		"Arc Reactor",
+		"Captain Jack's Compass",
+		"Golden Ticket",
+		"Heisenberg Hat",
+		"Vicodin Bottle",
+		"Sherlock's Pipe",
+		"Walter Sobchak Bowling Ball",
+		"Ghostbusters Proton Pack",
+		"Wilson Volleyball",
+		"Magic 8-Ball",
+		"Big Kahuna Burger",
+		"Inception Totem Top",
+		"Leon's Plant",
+		"Rocky Gloves",
+		"Chewbacca Plush",
+		"Saw Puzzle Box",
+		"Jigsaw Mask",
+		"Kubrick Monolith Replica",
+		"Neo's Sunglasses",
+		"John Wick' Pistol",
+	}
+	number, err := rand.Int(rand.Reader, big.NewInt(int64(len(items))))
+	if err != nil {
+		logger.LogFatal("newItemName — failed to generate random index", err)
+	}
+	return items[number.Int64()]
+}
+
+func newSale() int {
+	sale, err := rand.Int(rand.Reader, big.NewInt(100))
+	if err != nil {
+		logger.LogFatal("newSale — failed to generate random number", err)
+	}
+	return int(sale.Int64())
+}
+
+func newSize() string {
+	sizes := []string{"XS", "S", "M", "L", "XL"}
+	number, err := rand.Int(rand.Reader, big.NewInt(int64(len(sizes))))
+	if err != nil {
+		logger.LogFatal("newSize — failed to generate random index", err)
+	}
+	return sizes[number.Int64()]
+}
+
+func newTotalPrice(price float64, sale int) float64 {
+	return price * (1 - float64(sale)/100)
+}
+
+func newNmId() int {
+	number, err := rand.Int(rand.Reader, big.NewInt(10000000))
+	if err != nil {
+		logger.LogFatal("newNmId — failed to create random number", err)
+	}
+	return int(number.Int64())
+}
+
+func newBrand() string {
+	brands := []string{"Vivienne Sabo", "Maybelline", "L'Oreal", "NYX", "Revlon"}
+	number, err := rand.Int(rand.Reader, big.NewInt(int64(len(brands))))
+	if err != nil {
+		logger.LogFatal("newBrand — failed to generate random index", err)
+	}
+	return brands[number.Int64()]
+}
+
+func newStatus() int {
+	statuses := []int{100, 200, 202, 300, 400}
+	number, err := rand.Int(rand.Reader, big.NewInt(int64(len(statuses))))
+	if err != nil {
+		logger.LogFatal("newStatus — failed to generate random index", err)
+	}
+	return int(number.Int64())
 }

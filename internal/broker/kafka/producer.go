@@ -1,10 +1,11 @@
-package broker
+package kafka
 
 import (
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
@@ -16,37 +17,41 @@ type Producer struct {
 	producer *kafka.Producer
 }
 
-func NewProducer(clusterHosts []string) (*Producer, error) {
-	kafkaProducer, err := newKafkaProducer(clusterHosts)
+func NewProducer(config configs.Producer) (*Producer, error) {
+	kafkaProducer, err := kafka.NewProducer(confToMap(config))
 	if err != nil {
 		return nil, err
 	}
 	return &Producer{producer: kafkaProducer}, nil
 }
 
-func newKafkaProducer(clusterHosts []string) (*kafka.Producer, error) {
-	config := newProducerConfig(clusterHosts)
-	producer, err := kafka.NewProducer(config)
-	if err != nil {
-		return nil, err
+func confToMap(config configs.Producer) *kafka.ConfigMap {
+	acks := config.Kafka.Acks
+	var acksValue int
+	switch strings.ToLower(acks) {
+	case "all", "-1":
+		acksValue = -1
+	case "0":
+		acksValue = 0
+	case "1":
+		acksValue = 1
+	default:
+		acksValue = -1
 	}
-	return producer, nil
-}
 
-func newProducerConfig(clusterHosts []string) *kafka.ConfigMap {
 	return &kafka.ConfigMap{
-		"bootstrap.servers":  strings.Join(clusterHosts, ","),
-		"acks":               "all",
-		"retries":            3,
-		"linger.ms":          5,
-		"batch.size":         65536,
-		"compression.type":   "snappy",
-		"enable.idempotence": false,
-		"client.id":          "order-producer",
+		"bootstrap.servers":     strings.Join(config.Brokers, ","),
+		"request.required.acks": acksValue,
+		"retries":               config.Kafka.Retries,
+		"linger.ms":             config.Kafka.LingerMs,
+		"batch.size":            config.Kafka.BatchSize,
+		"compression.codec":     config.Kafka.CompressionType,
+		"enable.idempotence":    config.Kafka.EnableIdempotence,
+		"client.id":             config.ClientID,
 	}
 }
 
-func (p *Producer) Produce(data string, topic string) error {
+func (p *Producer) Produce(data []byte, topic string) error {
 	kafkaMessage, eventChan := newKafkaMessage(data, topic)
 	if err := p.producer.Produce(kafkaMessage, eventChan); err != nil {
 		return err
@@ -70,12 +75,12 @@ func (p *Producer) Produce(data string, topic string) error {
 	}
 }
 
-func newKafkaMessage(data string, topic string) (*kafka.Message, chan kafka.Event) {
+func newKafkaMessage(data []byte, topic string) (*kafka.Message, chan kafka.Event) {
 	eventChan := make(chan kafka.Event)
 	return &kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 		Key:            nil,
-		Value:          []byte(data),
+		Value:          data,
 	}, eventChan
 }
 

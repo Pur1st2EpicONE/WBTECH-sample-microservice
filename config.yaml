@@ -1,6 +1,35 @@
+server:
+  port: "8080"
+  read_timeout: 10s
+  write_timeout: 10s
+  max_header_bytes: 1048576
+
 database:
   host: localhost
   port: 5433
   username: Neo
   dbname: wb-service-db
   sslmode: disable
+
+kafka:
+  consumer:
+    brokers:
+      - localhost:9092
+    topic: orders
+    client_id: order-consumer
+    group_id: order-consumers
+    enable_auto_commit: false
+    auto_offset_reset: earliest
+    session_timeout_ms: 10000
+    max_poll_interval_ms: 300000
+  producer:
+    brokers:
+      - localhost:9092
+    client_id: order-producer
+    acks: all
+    retry_max: 3 
+    linger_ms: 5
+    batch_size: 65536
+    compression_type: snappy
+    enable_idempotence: true  
+                 
