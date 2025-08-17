@@ -5,11 +5,13 @@ import (
 )
 
 type Producer struct {
-	Brokers  []string
-	ClientID string
-	Kafka    *KafkaProducer
-	NATS     *NATSProducer
-	RabbitMQ *RabbitMQProducer
+	Brokers       []string
+	Topic         string
+	ClientID      string
+	TotalMessages int
+	Kafka         *KafkaProducer
+	NATS          *NATSProducer
+	RabbitMQ      *RabbitMQProducer
 }
 
 type KafkaProducer struct {

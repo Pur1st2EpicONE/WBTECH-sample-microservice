@@ -74,18 +74,3 @@ func dbConfig() Database {
 		SSLMode:  viper.GetString("database.sslmode"),
 	}
 }
-
-// type Kafka struct {
-// 	EnableAutoCommit  bool
-// 	AutoOffsetReset   string
-// 	SessionTimeoutMs  int
-// 	MaxPollIntervalMs int
-
-// 	Acks              string
-// 	EnableIdempotence bool
-// 	RetryMax          int
-// 	Retries           int
-// 	LingerMs          int
-// 	BatchSize         int
-// 	CompressionType   string
-// }

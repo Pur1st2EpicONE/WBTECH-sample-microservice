@@ -15,9 +15,9 @@ type Producer struct {
 }
 
 func NewProducer(config configs.Producer) (*Producer, error) {
-	kafka, err := kafka.NewProducer(config)
+	producer, err := kafka.NewProducer(config)
 	if err != nil {
 		return nil, err
 	}
-	return &Producer{EventProducer: kafka}, nil
+	return &Producer{EventProducer: producer}, nil
 }

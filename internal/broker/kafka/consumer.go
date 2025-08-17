@@ -14,12 +14,12 @@ import (
 
 const maxRetries = 3
 
-type Consumer struct {
+type KafkaConsumer struct {
 	consumer *kafka.Consumer
 	handler  *Handler
 }
 
-func NewConsumer(config configs.Consumer) (*Consumer, error) {
+func NewConsumer(config configs.Consumer) (*KafkaConsumer, error) {
 	kafkaConsumer, err := kafka.NewConsumer(toMap(config))
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func NewConsumer(config configs.Consumer) (*Consumer, error) {
 		return nil, err
 	}
 	orderHandler := NewHandler()
-	return &Consumer{consumer: kafkaConsumer, handler: orderHandler}, nil
+	return &KafkaConsumer{consumer: kafkaConsumer, handler: orderHandler}, nil
 }
 
 func toMap(config configs.Consumer) *kafka.ConfigMap {
@@ -41,7 +41,7 @@ func toMap(config configs.Consumer) *kafka.ConfigMap {
 	}
 }
 
-func (c *Consumer) Run(ctx context.Context, storage *repository.Storage) {
+func (c *KafkaConsumer) Run(ctx context.Context, storage *repository.Storage) {
 	logger.LogInfo("consumer — receiving orders")
 	for {
 		select {
@@ -81,7 +81,7 @@ func (c *Consumer) Run(ctx context.Context, storage *repository.Storage) {
 	}
 }
 
-func (c *Consumer) Close() {
+func (c *KafkaConsumer) Close() {
 	if err := c.consumer.Close(); err != nil {
 		logger.LogError("consumer — failed to stop properly: %v", err)
 	}

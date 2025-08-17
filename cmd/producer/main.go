@@ -17,24 +17,28 @@ import (
 )
 
 func main() {
-	amount := 10
-	checkArgs(&amount)
+
 	config, err := configs.ProdConfig()
 	if err != nil {
 		logger.LogFatal("producer — failed to load config", err)
 	}
+	fmt.Println(config.Kafka)
+
 	producer, err := broker.NewProducer(config)
 	if err != nil {
 		logger.LogFatal("producer — creation failed", err)
 	}
-	orders := getOrders(amount)
+
+	checkArgs(&config.TotalMessages)
+	orders := getOrders(config.TotalMessages)
+
 	for i, order := range orders {
-		orderJSONPretty, err := json.MarshalIndent(order, "", "   ")
+		orderJSON, err := json.MarshalIndent(order, "", "   ")
 		if err != nil {
 			logger.LogFatal("producer — failed to marshal order with indent", err)
 		}
 		logger.LogInfo(fmt.Sprintf("order-producer — sending order %d to Kafka", i+1))
-		producer.Produce(orderJSONPretty, "orders")
+		producer.Produce(orderJSON, config.Topic)
 	}
 }
 

@@ -18,9 +18,9 @@ type Consumer struct {
 }
 
 func NewConsumer(config configs.Consumer) (*Consumer, error) {
-	kafka, err := kafka.NewConsumer(config)
+	consumer, err := kafka.NewConsumer(config)
 	if err != nil {
 		return nil, err
 	}
-	return &Consumer{EventConsumer: kafka}, nil
+	return &Consumer{EventConsumer: consumer}, nil
 }

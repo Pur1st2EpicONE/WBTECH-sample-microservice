@@ -13,16 +13,16 @@ const (
 	flushTimeOutMs = 5000
 )
 
-type Producer struct {
+type KafkaProducer struct {
 	producer *kafka.Producer
 }
 
-func NewProducer(config configs.Producer) (*Producer, error) {
+func NewProducer(config configs.Producer) (*KafkaProducer, error) {
 	kafkaProducer, err := kafka.NewProducer(confToMap(config))
 	if err != nil {
 		return nil, err
 	}
-	return &Producer{producer: kafkaProducer}, nil
+	return &KafkaProducer{producer: kafkaProducer}, nil
 }
 
 func confToMap(config configs.Producer) *kafka.ConfigMap {
@@ -51,7 +51,7 @@ func confToMap(config configs.Producer) *kafka.ConfigMap {
 	}
 }
 
-func (p *Producer) Produce(data []byte, topic string) error {
+func (p *KafkaProducer) Produce(data []byte, topic string) error {
 	kafkaMessage, eventChan := newKafkaMessage(data, topic)
 	if err := p.producer.Produce(kafkaMessage, eventChan); err != nil {
 		return err
@@ -84,7 +84,7 @@ func newKafkaMessage(data []byte, topic string) (*kafka.Message, chan kafka.Even
 	}, eventChan
 }
 
-func (p *Producer) Close() {
+func (p *KafkaProducer) Close() {
 	p.producer.Flush(flushTimeOutMs)
 	p.producer.Close()
 }
