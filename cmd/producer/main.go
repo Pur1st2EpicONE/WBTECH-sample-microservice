@@ -518,7 +518,7 @@ func newNmId() int {
 }
 
 func newBrand() string {
-	brands := []string{"Vivienne Sabo", "Maybelline", "L'Oreal", "NYX", "Revlon"}
+	brands := []string{"Vivienne Sabo", "Maybelline", "L'Oreal", "NYX", "Revlon"} // change
 	number, err := rand.Int(rand.Reader, big.NewInt(int64(len(brands))))
 	if err != nil {
 		logger.LogFatal("newBrand — failed to generate random index", err)

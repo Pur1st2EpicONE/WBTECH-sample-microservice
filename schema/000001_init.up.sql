@@ -39,7 +39,8 @@ CREATE TABLE IF NOT EXISTS payments (
     goods_total NUMERIC(10,2) NOT NULL,
     custom_fee NUMERIC(10,2) NOT NULL DEFAULT 0,
     order_id INTEGER UNIQUE NOT NULL,
-    CONSTRAINT fk_payment_order_id FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+    CONSTRAINT fk_payment_order_id FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    CONSTRAINT fk_payment_transaction FOREIGN KEY (transaction) REFERENCES orders(order_uid) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS items (
@@ -56,7 +57,8 @@ CREATE TABLE IF NOT EXISTS items (
     brand VARCHAR(100) NOT NULL,
     status INTEGER NOT NULL,
     order_id INTEGER NOT NULL,
-    CONSTRAINT fk_item_order_id FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+    CONSTRAINT fk_item_order_id FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    CONSTRAINT fk_item_track_number FOREIGN KEY (track_number) REFERENCES orders(track_number) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_items_order_id ON items(order_id);

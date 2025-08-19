@@ -5,13 +5,13 @@ import (
 )
 
 func (s *Service) GetOrder(orderID string) (*models.Order, bool, error) {
-	if order, found := s.cache.GetCachedOrder(orderID); found {
+	if order, found := s.Cache.GetCachedOrder(orderID); found {
 		return order, true, nil
 	}
 	order, err := s.Storage.GetOrder(orderID)
 	if err != nil {
 		return nil, false, err
 	}
-	s.cache.CacheOrder(order)
+	s.Cache.CacheOrder(order)
 	return order, false, nil
 }

@@ -10,7 +10,23 @@ import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository"
 )
 
+//go:generate mockgen -source=cache.go -destination=mocks/mock.go
+
+type Cacher interface {
+	GetCachedOrder(orderID string) (*models.Order, bool)
+	CacheOrder(order *models.Order)
+	CacheCleaner(ctx context.Context)
+}
+
 type Cache struct {
+	Cacher
+}
+
+func NewCache(storage *repository.Storage, orderTTL time.Duration) *Cache {
+	return &Cache{Cacher: newDefaultCacher(storage, orderTTL)}
+}
+
+type defaultCacher struct {
 	mu       sync.RWMutex
 	orders   map[string]*CachedOrder
 	orderTTL time.Duration
@@ -21,22 +37,22 @@ type CachedOrder struct {
 	lastAccess time.Time
 }
 
-func LoadCache(storage *repository.Storage, orderTTL time.Duration) *Cache {
+func newDefaultCacher(storage *repository.Storage, orderTTL time.Duration) *defaultCacher {
 	cachedOrders := make(map[string]*CachedOrder)
 	allOrders, err := storage.GetAllOrders()
 	if err != nil {
 		logger.LogError("cache — failed to load orders from database", err)
-		return &Cache{orders: cachedOrders, orderTTL: orderTTL}
+		return &defaultCacher{orders: cachedOrders, orderTTL: orderTTL}
 	}
 	logger.LogInfo("cache — load from database complete")
 	for _, order := range allOrders {
 		cachedOrders[order.OrderUID] = &CachedOrder{order: order, lastAccess: time.Now()}
 	}
-	cache := &Cache{orders: cachedOrders, orderTTL: orderTTL}
+	cache := &defaultCacher{orders: cachedOrders, orderTTL: orderTTL}
 	return cache
 }
 
-func (c *Cache) GetCachedOrder(orderID string) (*models.Order, bool) {
+func (c *defaultCacher) GetCachedOrder(orderID string) (*models.Order, bool) {
 	c.mu.RLock()
 	cachedOrder, found := c.orders[orderID]
 	c.mu.RUnlock()
@@ -49,7 +65,7 @@ func (c *Cache) GetCachedOrder(orderID string) (*models.Order, bool) {
 	return cachedOrder.order, true
 }
 
-func (c *Cache) CacheOrder(order *models.Order) {
+func (c *defaultCacher) CacheOrder(order *models.Order) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if cachedOrder, found := c.orders[order.OrderUID]; found {
@@ -61,7 +77,7 @@ func (c *Cache) CacheOrder(order *models.Order) {
 	}
 }
 
-func (c *Cache) CacheCleaner(ctx context.Context) {
+func (c *defaultCacher) CacheCleaner(ctx context.Context) {
 	logger.LogInfo("cache — cleaner started")
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()

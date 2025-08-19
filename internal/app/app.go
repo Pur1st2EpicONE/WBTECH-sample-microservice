@@ -46,7 +46,7 @@ func Start() *App {
 
 	var wg sync.WaitGroup
 	ctx, stop := newContext()
-	cache := cache.LoadCache(storage, 20*time.Second)
+	cache := cache.NewCache(storage, 20*time.Second)
 	go cache.CacheCleaner(ctx)
 	srv := server.NewServer(config.Server, cache, storage)
 

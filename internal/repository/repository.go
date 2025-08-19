@@ -6,6 +6,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+//go:generate mockgen -source=repository.go -destination=mocks/mock.go
+
 type Storer interface {
 	SaveOrder(order *models.Order) error
 	GetOrder(id string) (*models.Order, error)
