@@ -13,12 +13,10 @@ import (
 )
 
 func TestNewService(t *testing.T) {
-
 	mockStorer := new(repository.Storage)
 	mockCacher := new(cache.Cache)
 
 	service := NewService(mockStorer, mockCacher)
-
 	if service.Storage != *mockStorer {
 		t.Error("storage assigning error")
 	}
@@ -28,7 +26,6 @@ func TestNewService(t *testing.T) {
 }
 
 func TestService_GetOrder_CacheHit(t *testing.T) {
-
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 
@@ -58,11 +55,11 @@ func TestService_GetOrder_CacheHit(t *testing.T) {
 }
 
 func TestService_GetOrder_CacheMiss(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	controller := gomock.NewController(t)
+	defer controller.Finish()
 
-	mockStorer := mock_repo.NewMockStorer(ctrl)
-	mockCacher := mock_cache.NewMockCacher(ctrl)
+	mockStorer := mock_repo.NewMockStorer(controller)
+	mockCacher := mock_cache.NewMockCacher(controller)
 
 	mockStorage := repository.Storage{Storer: mockStorer}
 	mockCache := cache.Cache{Cacher: mockCacher}
@@ -89,11 +86,11 @@ func TestService_GetOrder_CacheMiss(t *testing.T) {
 }
 
 func TestService_GetOrder_FromDB_NotFound(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	controller := gomock.NewController(t)
+	defer controller.Finish()
 
-	mockStorer := mock_repo.NewMockStorer(ctrl)
-	mockCacher := mock_cache.NewMockCacher(ctrl)
+	mockStorer := mock_repo.NewMockStorer(controller)
+	mockCacher := mock_cache.NewMockCacher(controller)
 
 	mockStorage := repository.Storage{Storer: mockStorer}
 	mockCache := cache.Cache{Cacher: mockCacher}

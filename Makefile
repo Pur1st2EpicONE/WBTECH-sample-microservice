@@ -1,4 +1,4 @@
-.PHONY: all up create-topic run-service
+.PHONY: all up create-topic run-service test test-unit test-integration coverage coverage-html migrate-test
 
 all: services db-load migrate-up create-topic run-service
 
@@ -6,7 +6,7 @@ services:
 	@cat .env.example > .env
 	@docker-compose up -d
 	@echo "Waiting for Kafka to start..."
-	@sleep 10
+	@sleep 7
 
 down:
 	@docker-compose down
@@ -28,3 +28,16 @@ migrate-up:
 
 migrate-down:
 	@migrate -path ./schema -database 'postgres://Neo:0451@localhost:5433/wb-service-db?sslmode=disable' down
+
+test: test-pg
+
+test-unit:
+	go test -v -cover ./...
+
+test-pg:
+	@docker-compose up -d postgres_test
+	@until docker exec postgres_test pg_isready -U Neo > /dev/null 2>&1; do sleep 0.5; done
+	@sleep 2
+	@migrate -path ./schema -database 'postgres://Neo:0451@localhost:5434/wb-service-db-test?sslmode=disable' up
+	go test -v -count=1 -tags=integration ./internal/repository/repository_integration_test.go
+	@docker-compose down
