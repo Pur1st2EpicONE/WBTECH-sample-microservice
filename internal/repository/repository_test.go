@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository/postgres"
 	"github.com/jmoiron/sqlx"
 )
@@ -92,5 +94,39 @@ func TestPostgresStorer_SaveOrder_Success(t *testing.T) {
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %v", err)
+	}
+}
+
+func TestConnectDB_SQLXOpenFail(t *testing.T) {
+	config := configs.Database{
+		Driver:   "bad driver name",
+		Host:     "localhost",
+		Port:     "5434",
+		Username: "Neo",
+		Password: "0452",
+		DBName:   "wb-service-db-test",
+		SSLMode:  "disable",
+	}
+
+	_, err := repository.ConnectDB(config)
+	if err == nil {
+		t.Fatalf("ConnectPostgres fail to fail: %v", err)
+	}
+}
+
+func TestConnectDB_PingFail(t *testing.T) {
+	cfg := configs.Database{
+		Driver:   "postgres",
+		Host:     "localhost",
+		Port:     "bad port",
+		Username: "user",
+		Password: "pass",
+		DBName:   "test",
+		SSLMode:  "disable",
+	}
+
+	_, err := repository.ConnectDB(cfg)
+	if err == nil {
+		t.Fatal("expected ping to fail, got nil")
 	}
 }

@@ -13,7 +13,6 @@ import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository"
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository/postgres"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/server"
 )
 
@@ -33,10 +32,11 @@ func Start() *App {
 		logger.LogFatal("app — failed to load configs", err)
 	}
 
-	db, err := postgres.ConnectPostgres(config.Database)
+	db, err := repository.ConnectDB(config.Database)
 	if err != nil {
 		logger.LogFatal("app — failed to connect to database", err)
 	}
+	logger.LogInfo("app — connected to database")
 	storage := repository.NewStorage(db)
 
 	consumer, err := broker.NewConsumer(config.Consumer)

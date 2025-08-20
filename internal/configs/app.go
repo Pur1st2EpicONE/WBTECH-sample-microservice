@@ -22,6 +22,7 @@ type Server struct {
 }
 
 type Database struct {
+	Driver   string
 	Host     string
 	Port     string
 	Username string
@@ -66,6 +67,7 @@ func srvConfig() Server {
 
 func dbConfig() Database {
 	return Database{
+		Driver:   viper.GetString("database.driver"),
 		Host:     viper.GetString("database.host"),
 		Port:     viper.GetString("database.port"),
 		Username: viper.GetString("database.username"),

@@ -1,10 +1,11 @@
 server:
-  port: "8080"
+  port: "8081"
   read_timeout: 10s
   write_timeout: 10s
   max_header_bytes: 1048576
 
 database:
+  driver: postgres
   host: localhost
   port: 5433
   username: Neo

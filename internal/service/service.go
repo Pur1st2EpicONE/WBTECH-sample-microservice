@@ -6,8 +6,6 @@ import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository"
 )
 
-//go:generate mockgen -source=service.go -destination=mocks/mock.go
-
 type ServiceProvider interface {
 	GetOrder(orderID string) (*models.Order, bool, error)
 }
