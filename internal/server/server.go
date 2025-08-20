@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/cache"
@@ -17,7 +16,7 @@ type Server struct {
 	httpServer *http.Server
 }
 
-func NewServer(config configs.Server, cache *cache.Cache, storage *repository.Storage) *Server {
+func NewServer(config configs.Server, cache cache.Cache, storage *repository.Storage) *Server {
 	service := service.NewService(storage, cache)
 	handler := handler.NewHandler(service)
 	router := handler.InitRoutes()
@@ -36,18 +35,17 @@ func (s *Server) serverConfig(config configs.Server, handler http.Handler) {
 	}
 }
 
-func (s *Server) Run(ctx context.Context) {
+func (s *Server) Run(ctx context.Context) error {
 	logger.LogInfo("server — receiving requests")
 	err := s.httpServer.ListenAndServe()
-	if err != nil && !errors.Is(err, http.ErrServerClosed) {
-		logger.LogFatal("server — run failed", err)
-	}
-
+	return err
 }
 
 func (s *Server) Shutdown(ctx context.Context) {
 	if err := s.httpServer.Shutdown(ctx); err != nil {
-		logger.LogError("server — failed to stop properly", err)
+		logger.LogError("server — failed to shutdown gracefully", err)
+	} else {
+		logger.LogInfo("server — shutdown complete")
 	}
-	logger.LogInfo("server — shutdown complete")
+
 }

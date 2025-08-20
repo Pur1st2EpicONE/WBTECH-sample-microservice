@@ -7,12 +7,12 @@ services:
 	@docker-compose up -d
 	@echo "Waiting for Kafka to start..."
 	@sleep 7
-
+	
 down:
 	@docker-compose down
 	@rm -rf ./logs
 	@rm -rf .env
-
+	
 db-load:
 	@until docker exec postgres pg_isready -U Neo > /dev/null 2>&1; do sleep 0.5; done
 
@@ -39,11 +39,11 @@ test-pg:
 	@until docker exec postgres_test pg_isready -U Neo > /dev/null 2>&1; do sleep 0.5; done
 	@sleep 2
 	@migrate -path ./schema -database 'postgres://Neo:0451@localhost:5434/wb-service-db-test?sslmode=disable' up
-	go test ./internal/repository/... -coverprofile=coverage.out -v
+	go test ./... -coverprofile=coverage.out -v
 	go tool cover -html=coverage.out -o cover.html
 	rm -f coverage.out
 	-@docker-compose down
 
 coverage:
 	go test ./... -coverprofile=coverage.out -v
-	go tool cover -html=cover.out -o cover.html
+	go tool cover -html=coverage.out -o cover.html

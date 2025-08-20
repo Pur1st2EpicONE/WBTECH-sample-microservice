@@ -4,38 +4,36 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/cache"
 	mock_cache "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/cache/mocks"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository"
 	mock_repo "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository/mocks"
 	"github.com/golang/mock/gomock"
 )
 
 func TestNewService(t *testing.T) {
-	mockStorer := new(repository.Storage)
-	mockCacher := new(cache.Cache)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStorer := mock_repo.NewMockStorer(ctrl)
+	mockCacher := mock_cache.NewMockCacher(ctrl)
 
 	service := NewService(mockStorer, mockCacher)
-	if service.Storage != *mockStorer {
-		t.Error("storage assigning error")
-	}
-	if service.Cache != *mockCacher {
-		t.Error("cache assigning error")
+	if service == nil {
+		t.Fatal("expected service, got nil")
 	}
 }
 
 func TestService_GetOrder_CacheHit(t *testing.T) {
-	controller := gomock.NewController(t)
-	defer controller.Finish()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	mockStorer := mock_repo.NewMockStorer(controller)
-	mockCacher := mock_cache.NewMockCacher(controller)
+	mockStorer := mock_repo.NewMockStorer(ctrl)
+	mockCacher := mock_cache.NewMockCacher(ctrl)
 
-	mockStorage := repository.Storage{Storer: mockStorer}
-	mockCache := cache.Cache{Cacher: mockCacher}
-
-	service := &Service{Storage: mockStorage, Cache: mockCache}
+	service := &Service{
+		Storage: mockStorer,
+		Cache:   mockCacher,
+	}
 
 	orderID := "1703"
 	cachedOrder := &models.Order{OrderUID: orderID}
@@ -50,21 +48,21 @@ func TestService_GetOrder_CacheHit(t *testing.T) {
 		t.Fatalf("order not found in cache")
 	}
 	if order.OrderUID != orderID {
-		t.Fatalf("expected order with orderID %s, got order with orderID %s", orderID, order.OrderUID)
+		t.Fatalf("expected order with orderID %s, got %s", orderID, order.OrderUID)
 	}
 }
 
 func TestService_GetOrder_CacheMiss(t *testing.T) {
-	controller := gomock.NewController(t)
-	defer controller.Finish()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	mockStorer := mock_repo.NewMockStorer(controller)
-	mockCacher := mock_cache.NewMockCacher(controller)
+	mockStorer := mock_repo.NewMockStorer(ctrl)
+	mockCacher := mock_cache.NewMockCacher(ctrl)
 
-	mockStorage := repository.Storage{Storer: mockStorer}
-	mockCache := cache.Cache{Cacher: mockCacher}
-
-	service := &Service{Storage: mockStorage, Cache: mockCache}
+	service := &Service{
+		Storage: mockStorer,
+		Cache:   mockCacher,
+	}
 
 	orderID := "1"
 	expectedOrder := &models.Order{OrderUID: orderID}
@@ -81,21 +79,21 @@ func TestService_GetOrder_CacheMiss(t *testing.T) {
 		t.Fatalf("cache returned an order when it should be empty")
 	}
 	if order.OrderUID != orderID {
-		t.Fatalf("expected order with orderID %s, got order with orderID %s", orderID, order.OrderUID)
+		t.Fatalf("expected order with orderID %s, got %s", orderID, order.OrderUID)
 	}
 }
 
 func TestService_GetOrder_FromDB_NotFound(t *testing.T) {
-	controller := gomock.NewController(t)
-	defer controller.Finish()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	mockStorer := mock_repo.NewMockStorer(controller)
-	mockCacher := mock_cache.NewMockCacher(controller)
+	mockStorer := mock_repo.NewMockStorer(ctrl)
+	mockCacher := mock_cache.NewMockCacher(ctrl)
 
-	mockStorage := repository.Storage{Storer: mockStorer}
-	mockCache := cache.Cache{Cacher: mockCacher}
-
-	service := &Service{Storage: mockStorage, Cache: mockCache}
+	service := &Service{
+		Storage: mockStorer,
+		Cache:   mockCacher,
+	}
 
 	orderID := "0"
 

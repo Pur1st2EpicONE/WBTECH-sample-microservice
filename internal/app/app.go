@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"errors"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -44,10 +46,10 @@ func Start() *App {
 		logger.LogFatal("app — failed to create consumer", err)
 	}
 
-	var wg sync.WaitGroup
-	ctx, stop := newContext()
 	cache := cache.NewCache(storage, 20*time.Second)
+	ctx, stop := newContext()
 	go cache.CacheCleaner(ctx)
+	var wg sync.WaitGroup
 	srv := server.NewServer(config.Server, cache, storage)
 
 	return &App{srv: srv, consumer: consumer, storage: storage, ctx: ctx, Stop: stop, wg: &wg}
@@ -70,10 +72,15 @@ func (a *App) RunServer() {
 	go func() {
 		defer a.wg.Done()
 		<-a.ctx.Done()
-		a.srv.Shutdown(a.ctx)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		a.srv.Shutdown(ctx)
 		a.storage.Close()
 	}()
-	a.srv.Run(a.ctx)
+	err := a.srv.Run(a.ctx)
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		logger.LogFatal("app — server run failed", err)
+	}
 }
 
 func (a *App) RunConsumer() {

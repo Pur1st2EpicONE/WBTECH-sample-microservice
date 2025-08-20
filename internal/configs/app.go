@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -33,13 +34,14 @@ type Database struct {
 
 func Load() (App, error) {
 	if err := godotenv.Load(); err != nil {
-		return App{}, err
+		return App{}, fmt.Errorf("godotenv — failed to %v", err) // phrasing is odd here, but gives a clean error message in logs
+
 	}
 
 	viper.AddConfigPath(".")
 	viper.SetConfigName("config")
 	if err := viper.ReadInConfig(); err != nil {
-		return App{}, err
+		return App{}, fmt.Errorf("viper — %v", err)
 	}
 
 	return App{
