@@ -14,8 +14,8 @@ import (
 
 type Cache interface {
 	GetCachedOrder(orderID string) (*models.Order, bool)
-	CacheOrder(order *models.Order)
-	CacheCleaner(ctx context.Context)
+	CacheOrder(order *models.Order, logger logger.Logger)
+	CacheCleaner(ctx context.Context, logger logger.Logger)
 }
 
 type defaultCache struct {
@@ -29,7 +29,7 @@ type CachedOrder struct {
 	lastAccess time.Time
 }
 
-func NewCache(storage repository.Storer, orderTTL time.Duration) Cache {
+func NewCache(storage repository.Storer, orderTTL time.Duration, logger logger.Logger) Cache {
 	cachedOrders := make(map[string]*CachedOrder)
 
 	allOrders, err := storage.GetAllOrders()
@@ -64,7 +64,7 @@ func (c *defaultCache) GetCachedOrder(orderID string) (*models.Order, bool) {
 	return cachedOrder.order, true
 }
 
-func (c *defaultCache) CacheOrder(order *models.Order) {
+func (c *defaultCache) CacheOrder(order *models.Order, logger logger.Logger) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if cachedOrder, found := c.orders[order.OrderUID]; found {
@@ -72,11 +72,11 @@ func (c *defaultCache) CacheOrder(order *models.Order) {
 		cachedOrder.lastAccess = time.Now()
 	} else {
 		c.orders[order.OrderUID] = &CachedOrder{order: order, lastAccess: time.Now()}
-		logger.LogInfo("cache — saved order", "orderUID", order.OrderUID)
+		logger.LogInfo("cache — saved order")
 	}
 }
 
-func (c *defaultCache) CacheCleaner(ctx context.Context) {
+func (c *defaultCache) CacheCleaner(ctx context.Context, logger logger.Logger) {
 	logger.LogInfo("cache — cleaner started")
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()

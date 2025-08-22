@@ -1,10 +1,11 @@
 package service
 
 import (
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 )
 
-func (s *Service) GetOrder(orderID string) (*models.Order, bool, error) {
+func (s *Service) GetOrder(orderID string, logger logger.Logger) (*models.Order, bool, error) {
 	if order, found := s.Cache.GetCachedOrder(orderID); found {
 		return order, true, nil
 	}
@@ -12,6 +13,6 @@ func (s *Service) GetOrder(orderID string) (*models.Order, bool, error) {
 	if err != nil {
 		return nil, false, err
 	}
-	s.Cache.CacheOrder(order)
+	s.Cache.CacheOrder(order, logger)
 	return order, false, nil
 }

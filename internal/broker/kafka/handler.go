@@ -10,7 +10,7 @@ import (
 )
 
 type MessageHandler interface {
-	SaveOrder(jsonMsg []byte, storage repository.Storage) error
+	SaveOrder(jsonMsg []byte, storage repository.Storage, logger logger.Logger) error
 }
 
 type Handler struct{}
@@ -19,7 +19,7 @@ func NewHandler() *Handler {
 	return new(Handler)
 }
 
-func (h *Handler) SaveOrder(jsonMsg []byte, storage repository.Storage) error {
+func (h *Handler) SaveOrder(jsonMsg []byte, storage repository.Storage, logger logger.Logger) error {
 	order := new(models.Order)
 	if err := json.Unmarshal(jsonMsg, order); err != nil {
 		return fmt.Errorf("consumer-handler — failed to unmarshal the order: %v", err)

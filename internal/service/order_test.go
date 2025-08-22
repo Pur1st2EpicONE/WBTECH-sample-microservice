@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	mock_cache "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/cache/mocks"
+	mock_logger "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger/mocks"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 	mock_repo "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository/mocks"
 	"github.com/golang/mock/gomock"
@@ -15,7 +16,7 @@ func TestNewService(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStorer := mock_repo.NewMockStorer(ctrl)
-	mockCacher := mock_cache.NewMockCacher(ctrl)
+	mockCacher := mock_cache.NewMockCache(ctrl)
 
 	service := NewService(mockStorer, mockCacher)
 	if service == nil {
@@ -28,7 +29,7 @@ func TestService_GetOrder_CacheHit(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStorer := mock_repo.NewMockStorer(ctrl)
-	mockCacher := mock_cache.NewMockCacher(ctrl)
+	mockCacher := mock_cache.NewMockCache(ctrl)
 
 	service := &Service{
 		Storage: mockStorer,
@@ -39,8 +40,8 @@ func TestService_GetOrder_CacheHit(t *testing.T) {
 	cachedOrder := &models.Order{OrderUID: orderID}
 
 	mockCacher.EXPECT().GetCachedOrder(orderID).Return(cachedOrder, true)
-
-	order, found, err := service.GetOrder(orderID)
+	logger := mock_logger.NewMockLogger(gomock.NewController(t))
+	order, found, err := service.GetOrder(orderID, logger)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -57,7 +58,8 @@ func TestService_GetOrder_CacheMiss(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStorer := mock_repo.NewMockStorer(ctrl)
-	mockCacher := mock_cache.NewMockCacher(ctrl)
+	mockCacher := mock_cache.NewMockCache(ctrl)
+	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 
 	service := &Service{
 		Storage: mockStorer,
@@ -69,9 +71,9 @@ func TestService_GetOrder_CacheMiss(t *testing.T) {
 
 	mockCacher.EXPECT().GetCachedOrder(orderID).Return(nil, false)
 	mockStorer.EXPECT().GetOrder(orderID).Return(expectedOrder, nil)
-	mockCacher.EXPECT().CacheOrder(expectedOrder)
+	mockCacher.EXPECT().CacheOrder(expectedOrder, logger)
 
-	order, found, err := service.GetOrder(orderID)
+	order, found, err := service.GetOrder(orderID, logger)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -88,7 +90,7 @@ func TestService_GetOrder_FromDB_NotFound(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStorer := mock_repo.NewMockStorer(ctrl)
-	mockCacher := mock_cache.NewMockCacher(ctrl)
+	mockCacher := mock_cache.NewMockCache(ctrl)
 
 	service := &Service{
 		Storage: mockStorer,
@@ -99,8 +101,9 @@ func TestService_GetOrder_FromDB_NotFound(t *testing.T) {
 
 	mockCacher.EXPECT().GetCachedOrder(orderID).Return(nil, false)
 	mockStorer.EXPECT().GetOrder(orderID).Return(nil, fmt.Errorf("order not found in storage"))
+	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 
-	order, fromCache, err := service.GetOrder(orderID)
+	order, fromCache, err := service.GetOrder(orderID, logger)
 	if err == nil {
 		t.Fatalf("expected error, got nil")
 	}

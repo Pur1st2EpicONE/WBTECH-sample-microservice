@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	mock_logger "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger/mocks"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository/postgres"
+	"github.com/golang/mock/gomock"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -17,7 +19,9 @@ func TestPostgresStorer_GetOrder_Success(t *testing.T) {
 	}
 	defer db.Close()
 
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"))
+	logger := mock_logger.NewMockLogger(gomock.NewController(t))
+	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
+
 	orderUID := "test-uid"
 	orderID := 1
 	paymentTime := time.Now()
@@ -186,7 +190,8 @@ func TestPostgresStorer_QueryAllButItems_RowsScanError(t *testing.T) {
 	}
 	defer db.Close()
 
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"))
+	logger := mock_logger.NewMockLogger(gomock.NewController(t))
+	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
 
 	orderQuery := `SELECT
 
@@ -242,7 +247,9 @@ func TestPostgresStorer_QueryItems_RowsScanError(t *testing.T) {
 	}
 	defer db.Close()
 
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"))
+	logger := mock_logger.NewMockLogger(gomock.NewController(t))
+	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
+
 	paymentTime := time.Now()
 
 	orderQuery := `SELECT
@@ -403,7 +410,9 @@ func TestPostgresStorer_QueryItems_QueryContextError(t *testing.T) {
 	}
 	defer db.Close()
 
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"))
+	logger := mock_logger.NewMockLogger(gomock.NewController(t))
+	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
+
 	paymentTime := time.Now()
 
 	allQuery := `SELECT
@@ -537,7 +546,9 @@ func TestPostgresStorer_GetAllOrders_Success(t *testing.T) {
 	}
 	defer db.Close()
 
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"))
+	logger := mock_logger.NewMockLogger(gomock.NewController(t))
+	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
+
 	orderID := 1
 	paymentTime := time.Now()
 
@@ -702,7 +713,8 @@ func TestPostgresStorer_GetAllOrders_QueryContextError(t *testing.T) {
 	}
 	defer db.Close()
 
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"))
+	logger := mock_logger.NewMockLogger(gomock.NewController(t))
+	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
 
 	allQuery := `SELECT
 
@@ -757,7 +769,8 @@ func TestPostgresStorer_GetAllOrders_RowsScanError(t *testing.T) {
 	}
 	defer db.Close()
 
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"))
+	logger := mock_logger.NewMockLogger(gomock.NewController(t))
+	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
 
 	allQuery := `SELECT
 

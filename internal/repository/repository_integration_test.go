@@ -5,8 +5,10 @@ import (
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/broker/kafka"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
+	mock_logger "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger/mocks"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository/postgres"
+	"github.com/golang/mock/gomock"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -14,6 +16,13 @@ func TestConnectDB_Success_Integration(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	logger := mock_logger.NewMockLogger(ctrl)
+	logger.EXPECT().LogInfo("postgres — stopped")
+
 	config := configs.Database{
 		Driver:   "postgres",
 		Host:     "localhost",
@@ -30,11 +39,12 @@ func TestConnectDB_Success_Integration(t *testing.T) {
 	}
 	defer db.Close()
 
-	ps := postgres.NewPostgresStorer(db)
+	ps := postgres.NewPostgresStorer(db, logger)
 
 	if err := ps.Ping(); err != nil {
 		t.Fatalf("Ping failed: %v", err)
 	}
+
 	ps.Close()
 }
 
@@ -48,9 +58,10 @@ func TestPostgresStorer_SaveOrder_Integration(t *testing.T) {
 	}
 	defer db.Close()
 
-	ps := repository.NewStorage(db).Storer.(*postgres.PostgresStorer)
+	logger := mock_logger.NewMockLogger(gomock.NewController(t))
+	ps := repository.NewStorage(db, logger).Storer.(*postgres.PostgresStorer)
 
-	order := kafka.CreateOrder()
+	order := kafka.CreateOrder(logger)
 	order.OrderUID = "1"
 	order.Payment.Transaction = order.OrderUID
 
@@ -69,7 +80,8 @@ func TestPostgresStorer_GetOrder_Integration(t *testing.T) {
 	}
 	defer db.Close()
 
-	ps := repository.NewStorage(db).Storer.(*postgres.PostgresStorer)
+	logger := mock_logger.NewMockLogger(gomock.NewController(t))
+	ps := repository.NewStorage(db, logger).Storer.(*postgres.PostgresStorer)
 
 	order, err := ps.GetOrder("1")
 	if err != nil {
@@ -90,10 +102,10 @@ func TestPostgresStorer_SaveAndGetOrder_Integration(t *testing.T) {
 		t.Fatalf("failed to connect to db: %v", err)
 	}
 	defer db.Close()
+	logger := mock_logger.NewMockLogger(gomock.NewController(t))
+	ps := repository.NewStorage(db, logger).Storer.(*postgres.PostgresStorer)
 
-	ps := repository.NewStorage(db).Storer.(*postgres.PostgresStorer)
-
-	order := kafka.CreateOrder()
+	order := kafka.CreateOrder(logger)
 
 	if err := ps.SaveOrder(&order); err != nil {
 		t.Fatalf("SaveOrder failed: %v", err)

@@ -12,7 +12,7 @@ import (
 func (ps *PostgresStorer) SaveOrder(order *models.Order) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	tx, err := ps.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable}) // to ensure payment integrity
+	tx, err := ps.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("postgres-storer — failed to start transaction: %v", err)
 	}

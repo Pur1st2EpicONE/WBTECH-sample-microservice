@@ -4,7 +4,7 @@ all: services db-load migrate-up create-topic run-service
 
 services:
 	@cat .env.example > .env
-	@docker-compose up -d
+	@docker-compose up -d postgres kafka
 	@echo "Waiting for Kafka to start..."
 	@sleep 7
 	
@@ -37,7 +37,7 @@ test-unit:
 test-pg:
 	@docker-compose up -d postgres_test
 	@until docker exec postgres_test pg_isready -U Neo > /dev/null 2>&1; do sleep 0.5; done
-	@sleep 2
+	@sleep 10
 	@migrate -path ./schema -database 'postgres://Neo:0451@localhost:5434/wb-service-db-test?sslmode=disable' up
 	go test ./... -coverprofile=coverage.out -v
 	go tool cover -html=coverage.out -o cover.html

@@ -11,89 +11,89 @@ import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 )
 
-func GetOrders(amount int) []models.Order {
+func GetOrders(amount int, logger logger.Logger) []models.Order {
 	var orders []models.Order
 	for range amount {
-		orders = append(orders, CreateOrder())
+		orders = append(orders, CreateOrder(logger))
 	}
 	return orders
 }
 
-func CreateOrder() models.Order {
+func CreateOrder(logger logger.Logger) models.Order {
 	var order models.Order
 
 	order.OrderUID = newOderUID()
 	order.TrackNumber = newTrackNumber()
 	order.Entry = "WBIL"
-	order.Delivery = createDelivery()
-	order.Payment = createPayment(order)
-	order.Items = createItems(order)
-	order.Locale = newLocale()
+	order.Delivery = createDelivery(logger)
+	order.Payment = createPayment(order, logger)
+	order.Items = createItems(order, logger)
+	order.Locale = newLocale(logger)
 	order.InternalSignature = ""
 	order.CustomerID = newCustomerID()
-	order.DeliveryService = newDeliveryService()
-	order.ShardKey = newShardKey()
-	order.SmID = newSmID()
+	order.DeliveryService = newDeliveryService(logger)
+	order.ShardKey = newShardKey(logger)
+	order.SmID = newSmID(logger)
 	order.DateCreated = newDateCreated()
-	order.OofShard = newOofShard()
+	order.OofShard = newOofShard(logger)
 
 	return order
 }
 
-func createDelivery() models.Delivery {
+func createDelivery(logger logger.Logger) models.Delivery {
 	var delivery models.Delivery
 
-	delivery.Name = newName()
+	delivery.Name = newName(logger)
 	delivery.Phone = newPhone()
 	delivery.Zip = newZip()
-	delivery.City = newCity()
-	delivery.Address = newAddress()
-	delivery.Region = newRegion()
+	delivery.City = newCity(logger)
+	delivery.Address = newAddress(logger)
+	delivery.Region = newRegion(logger)
 	delivery.Email = newEmail()
 
 	return delivery
 }
 
-func createPayment(order models.Order) models.Payment {
+func createPayment(order models.Order, logger logger.Logger) models.Payment {
 	var payment models.Payment
 
 	payment.Transaction = order.OrderUID
 	payment.RequestID = ""
-	payment.Currency = newCurrency()
+	payment.Currency = newCurrency(logger)
 	payment.Provider = "wbpay"
-	payment.Amount = newAmount()
+	payment.Amount = newAmount(logger)
 	payment.PaymentDT = 1637907727 // can't be bothered
-	payment.Bank = newBank()
-	payment.DeliveryCost = newDeliveryCost()
-	payment.GoodsTotal = newGoodsTotal()
-	payment.CustomFee = newCustomFee()
+	payment.Bank = newBank(logger)
+	payment.DeliveryCost = newDeliveryCost(logger)
+	payment.GoodsTotal = newGoodsTotal(logger)
+	payment.CustomFee = newCustomFee(logger)
 
 	return payment
 }
 
-func createItems(order models.Order) []models.Item {
+func createItems(order models.Order, logger logger.Logger) []models.Item {
 	var items []models.Item
-	totalItems := totalItems()
+	totalItems := totalItems(logger)
 	for range totalItems {
-		items = append(items, newItem(order))
+		items = append(items, newItem(order, logger))
 	}
 	return items
 }
 
-func newItem(order models.Order) models.Item {
+func newItem(order models.Order, logger logger.Logger) models.Item {
 	var item models.Item
 
-	item.ChrtID = newChrtId()
+	item.ChrtID = newChrtId(logger)
 	item.TrackNumber = order.TrackNumber
-	item.Price = newPrice()
+	item.Price = newPrice(logger)
 	item.Rid = newRid()
-	item.Name = newItemName()
-	item.Sale = newSale()
-	item.Size = newSize()
+	item.Name = newItemName(logger)
+	item.Sale = newSale(logger)
+	item.Size = newSize(logger)
 	item.TotalPrice = newTotalPrice(item.Price, item.Sale)
-	item.NmID = newNmId()
-	item.Brand = newBrand()
-	item.Status = newStatus()
+	item.NmID = newNmId(logger)
+	item.Brand = newBrand(logger)
+	item.Status = newStatus(logger)
 
 	return item
 }
@@ -115,7 +115,7 @@ func newTrackNumber() string {
 	return "WBILM" + string(bytes)
 }
 
-func newLocale() string {
+func newLocale(logger logger.Logger) string {
 	locales := []string{"en", "ru", "de", "zh", "fr", "es", "it", "ja"}
 	number := big.NewInt(int64(len(locales)))
 	idx, err := rand.Int(rand.Reader, number)
@@ -132,7 +132,7 @@ func newCustomerID() string {
 	return id
 }
 
-func newDeliveryService() string {
+func newDeliveryService(logger logger.Logger) string {
 	names := []string{
 		"wildberries",
 		"meest",
@@ -151,7 +151,7 @@ func newDeliveryService() string {
 	return names[idx.Int64()]
 }
 
-func newShardKey() string {
+func newShardKey(logger logger.Logger) string {
 	max := big.NewInt(10)
 	key, err := rand.Int(rand.Reader, max)
 	if err != nil {
@@ -160,7 +160,7 @@ func newShardKey() string {
 	return fmt.Sprintf("%d", key.Int64())
 }
 
-func newSmID() int {
+func newSmID(logger logger.Logger) int {
 	max := big.NewInt(100)
 	id, err := rand.Int(rand.Reader, max)
 	if err != nil {
@@ -173,7 +173,7 @@ func newDateCreated() time.Time {
 	return time.Now()
 }
 
-func newOofShard() string {
+func newOofShard(logger logger.Logger) string {
 	max := big.NewInt(100)
 	key, err := rand.Int(rand.Reader, max)
 	if err != nil {
@@ -182,7 +182,7 @@ func newOofShard() string {
 	return fmt.Sprintf("%d", key.Int64())
 }
 
-func newName() string {
+func newName(logger logger.Logger) string {
 	names := []string{
 		"Test Testov",
 		"Max Payne",
@@ -227,7 +227,7 @@ func newZip() string {
 	return string(bytes)
 }
 
-func newCity() string {
+func newCity(logger logger.Logger) string {
 	cities := []string{
 		"Raccoon City",
 		"Vice City",
@@ -251,7 +251,7 @@ func newCity() string {
 	return cities[idx.Int64()]
 }
 
-func newAddress() string {
+func newAddress(logger logger.Logger) string {
 	addresses := []string{
 		"Ploshad Mira 15",
 		"Baker Street 221B",
@@ -271,7 +271,7 @@ func newAddress() string {
 	return addresses[idx.Int64()]
 }
 
-func newRegion() string {
+func newRegion(logger logger.Logger) string {
 	regions := []string{
 		"California",
 		"Bavaria",
@@ -303,7 +303,7 @@ func newEmail() string {
 	return mail
 }
 
-func newCurrency() string {
+func newCurrency(logger logger.Logger) string {
 	currencies := []string{"USD", "EUR", "GBP", "JPY", "CNY", "RUB", "AUD"}
 	number := big.NewInt(int64(len(currencies)))
 	idx, err := rand.Int(rand.Reader, number)
@@ -313,7 +313,7 @@ func newCurrency() string {
 	return currencies[idx.Int64()]
 }
 
-func newAmount() float64 {
+func newAmount(logger logger.Logger) float64 {
 	max := big.NewInt(100000)
 	amount, err := rand.Int(rand.Reader, max)
 	if err != nil {
@@ -322,7 +322,7 @@ func newAmount() float64 {
 	return float64(amount.Int64()) / 100.0
 }
 
-func newBank() string {
+func newBank(logger logger.Logger) string {
 	banks := []string{"alpha", "sber", "vtb", "gazprombank", "bank of america", "deutsche bank", "chase", "santander"}
 	number := big.NewInt(int64(len(banks)))
 	idx, err := rand.Int(rand.Reader, number)
@@ -332,7 +332,7 @@ func newBank() string {
 	return banks[idx.Int64()]
 }
 
-func newDeliveryCost() float64 {
+func newDeliveryCost(logger logger.Logger) float64 {
 	max := big.NewInt(5000)
 	cost, err := rand.Int(rand.Reader, max)
 	if err != nil {
@@ -341,7 +341,7 @@ func newDeliveryCost() float64 {
 	return float64(cost.Int64()) / 100.0
 }
 
-func newGoodsTotal() float64 {
+func newGoodsTotal(logger logger.Logger) float64 {
 	max := big.NewInt(200000)
 	total, err := rand.Int(rand.Reader, max)
 	if err != nil {
@@ -350,7 +350,7 @@ func newGoodsTotal() float64 {
 	return float64(total.Int64()) / 100.0
 }
 
-func newCustomFee() float64 {
+func newCustomFee(logger logger.Logger) float64 {
 	max := big.NewInt(10000)
 	fee, err := rand.Int(rand.Reader, max)
 	if err != nil {
@@ -359,7 +359,7 @@ func newCustomFee() float64 {
 	return float64(fee.Int64()) / 100.0
 }
 
-func totalItems() int64 {
+func totalItems(logger logger.Logger) int64 {
 	max := big.NewInt(5)
 	total, err := rand.Int(rand.Reader, max)
 	if err != nil {
@@ -367,7 +367,7 @@ func totalItems() int64 {
 	}
 	return total.Int64()
 }
-func newChrtId() int {
+func newChrtId(logger logger.Logger) int {
 	id, err := rand.Int(rand.Reader, big.NewInt(10000000))
 	if err != nil {
 		logger.LogFatal("newChrtId — failed to create random number", err)
@@ -375,7 +375,7 @@ func newChrtId() int {
 	return int(id.Int64())
 }
 
-func newPrice() float64 {
+func newPrice(logger logger.Logger) float64 {
 	price, err := rand.Int(rand.Reader, big.NewInt(5000))
 	if err != nil {
 		logger.LogFatal("newPrice — failed to create random number", err)
@@ -389,7 +389,7 @@ func newRid() string {
 	return hex.EncodeToString(bytes) + "test"
 }
 
-func newItemName() string {
+func newItemName(logger logger.Logger) string {
 	items := []string{
 		"Lightsaber",
 		"The One Ring",
@@ -446,7 +446,7 @@ func newItemName() string {
 	return items[number.Int64()]
 }
 
-func newSale() int {
+func newSale(logger logger.Logger) int {
 	sale, err := rand.Int(rand.Reader, big.NewInt(100))
 	if err != nil {
 		logger.LogFatal("newSale — failed to generate random number", err)
@@ -454,7 +454,7 @@ func newSale() int {
 	return int(sale.Int64())
 }
 
-func newSize() string {
+func newSize(logger logger.Logger) string {
 	sizes := []string{"XS", "S", "M", "L", "XL"}
 	number, err := rand.Int(rand.Reader, big.NewInt(int64(len(sizes))))
 	if err != nil {
@@ -467,7 +467,7 @@ func newTotalPrice(price float64, sale int) float64 {
 	return price * (1 - float64(sale)/100)
 }
 
-func newNmId() int {
+func newNmId(logger logger.Logger) int {
 	number, err := rand.Int(rand.Reader, big.NewInt(10000000))
 	if err != nil {
 		logger.LogFatal("newNmId — failed to create random number", err)
@@ -475,8 +475,16 @@ func newNmId() int {
 	return int(number.Int64())
 }
 
-func newBrand() string {
-	brands := []string{"Vivienne Sabo", "Maybelline", "L'Oreal", "NYX", "Revlon"} // change
+func newBrand(logger logger.Logger) string {
+	brands := []string{
+		"Oscorp",
+		"Wayne Enterprises",
+		"Stark Industries",
+		"Weyland-Yutani",
+		"Vault-Tec",
+		"Aperture Science",
+		"Black Mesa",
+	}
 	number, err := rand.Int(rand.Reader, big.NewInt(int64(len(brands))))
 	if err != nil {
 		logger.LogFatal("newBrand — failed to generate random index", err)
@@ -484,7 +492,7 @@ func newBrand() string {
 	return brands[number.Int64()]
 }
 
-func newStatus() int {
+func newStatus(logger logger.Logger) int {
 	statuses := []int{100, 200, 202, 300, 400}
 	number, err := rand.Int(rand.Reader, big.NewInt(int64(len(statuses))))
 	if err != nil {

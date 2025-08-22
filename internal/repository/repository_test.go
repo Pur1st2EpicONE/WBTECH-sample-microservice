@@ -5,20 +5,22 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
+	mock_logger "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger/mocks"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository/postgres"
+	"github.com/golang/mock/gomock"
 	"github.com/jmoiron/sqlx"
 )
 
-func TestPostgresStorer_SaveOrder_Success(t *testing.T) {
+func TestPostgresStorer_SaveOrder_Success(t *testing.T) { // integration?
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %v", err)
 	}
 	defer db.Close()
-
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"))
+	logger := mock_logger.NewMockLogger(gomock.NewController(t))
+	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
 
 	order := &models.Order{
 		OrderUID: "123",

@@ -8,59 +8,60 @@ import (
 	context "context"
 	reflect "reflect"
 
+	logger "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
 	models "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockCacher is a mock of Cacher interface.
-type MockCacher struct {
+// MockCache is a mock of Cache interface.
+type MockCache struct {
 	ctrl     *gomock.Controller
-	recorder *MockCacherMockRecorder
+	recorder *MockCacheMockRecorder
 }
 
-// MockCacherMockRecorder is the mock recorder for MockCacher.
-type MockCacherMockRecorder struct {
-	mock *MockCacher
+// MockCacheMockRecorder is the mock recorder for MockCache.
+type MockCacheMockRecorder struct {
+	mock *MockCache
 }
 
-// NewMockCacher creates a new mock instance.
-func NewMockCacher(ctrl *gomock.Controller) *MockCacher {
-	mock := &MockCacher{ctrl: ctrl}
-	mock.recorder = &MockCacherMockRecorder{mock}
+// NewMockCache creates a new mock instance.
+func NewMockCache(ctrl *gomock.Controller) *MockCache {
+	mock := &MockCache{ctrl: ctrl}
+	mock.recorder = &MockCacheMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockCacher) EXPECT() *MockCacherMockRecorder {
+func (m *MockCache) EXPECT() *MockCacheMockRecorder {
 	return m.recorder
 }
 
 // CacheCleaner mocks base method.
-func (m *MockCacher) CacheCleaner(ctx context.Context) {
+func (m *MockCache) CacheCleaner(ctx context.Context, logger logger.Logger) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "CacheCleaner", ctx)
+	m.ctrl.Call(m, "CacheCleaner", ctx, logger)
 }
 
 // CacheCleaner indicates an expected call of CacheCleaner.
-func (mr *MockCacherMockRecorder) CacheCleaner(ctx interface{}) *gomock.Call {
+func (mr *MockCacheMockRecorder) CacheCleaner(ctx, logger interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CacheCleaner", reflect.TypeOf((*MockCacher)(nil).CacheCleaner), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CacheCleaner", reflect.TypeOf((*MockCache)(nil).CacheCleaner), ctx, logger)
 }
 
 // CacheOrder mocks base method.
-func (m *MockCacher) CacheOrder(order *models.Order) {
+func (m *MockCache) CacheOrder(order *models.Order, logger logger.Logger) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "CacheOrder", order)
+	m.ctrl.Call(m, "CacheOrder", order, logger)
 }
 
 // CacheOrder indicates an expected call of CacheOrder.
-func (mr *MockCacherMockRecorder) CacheOrder(order interface{}) *gomock.Call {
+func (mr *MockCacheMockRecorder) CacheOrder(order, logger interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CacheOrder", reflect.TypeOf((*MockCacher)(nil).CacheOrder), order)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CacheOrder", reflect.TypeOf((*MockCache)(nil).CacheOrder), order, logger)
 }
 
 // GetCachedOrder mocks base method.
-func (m *MockCacher) GetCachedOrder(orderID string) (*models.Order, bool) {
+func (m *MockCache) GetCachedOrder(orderID string) (*models.Order, bool) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCachedOrder", orderID)
 	ret0, _ := ret[0].(*models.Order)
@@ -69,7 +70,7 @@ func (m *MockCacher) GetCachedOrder(orderID string) (*models.Order, bool) {
 }
 
 // GetCachedOrder indicates an expected call of GetCachedOrder.
-func (mr *MockCacherMockRecorder) GetCachedOrder(orderID interface{}) *gomock.Call {
+func (mr *MockCacheMockRecorder) GetCachedOrder(orderID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCachedOrder", reflect.TypeOf((*MockCacher)(nil).GetCachedOrder), orderID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCachedOrder", reflect.TypeOf((*MockCache)(nil).GetCachedOrder), orderID)
 }

@@ -7,11 +7,12 @@ import (
 )
 
 type PostgresStorer struct {
-	db *sqlx.DB
+	db     *sqlx.DB
+	logger logger.Logger
 }
 
-func NewPostgresStorer(db *sqlx.DB) *PostgresStorer {
-	return &PostgresStorer{db: db}
+func NewPostgresStorer(db *sqlx.DB, logger logger.Logger) *PostgresStorer {
+	return &PostgresStorer{db: db, logger: logger}
 }
 
 func (p *PostgresStorer) Ping() error {
@@ -20,8 +21,8 @@ func (p *PostgresStorer) Ping() error {
 
 func (p *PostgresStorer) Close() {
 	if err := p.db.Close(); err != nil {
-		logger.LogError("postgres — failed to close properly", err)
+		p.logger.LogError("postgres — failed to close properly", err)
 	} else {
-		logger.LogInfo("postgres — stopped")
+		p.logger.LogInfo("postgres — stopped")
 	}
 }

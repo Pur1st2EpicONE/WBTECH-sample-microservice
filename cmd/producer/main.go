@@ -13,6 +13,7 @@ import (
 )
 
 func main() {
+	logger, _ := logger.NewLogger("./logs")
 
 	config, err := configs.ProdConfig()
 	if err != nil {
@@ -24,8 +25,8 @@ func main() {
 		logger.LogFatal("producer — creation failed", err)
 	}
 
-	checkArgs(&config.TotalMessages)
-	orders := kafka.GetOrders(config.TotalMessages)
+	checkArgs(&config.TotalMessages, logger)
+	orders := kafka.GetOrders(config.TotalMessages, logger)
 
 	for i, order := range orders {
 		orderJSON, err := json.MarshalIndent(order, "", "   ")
@@ -37,7 +38,7 @@ func main() {
 	}
 }
 
-func checkArgs(amount *int) {
+func checkArgs(amount *int, logger logger.Logger) {
 	if len(os.Args) > 1 {
 		newAmount, err := strconv.Atoi(os.Args[1])
 		if err != nil {

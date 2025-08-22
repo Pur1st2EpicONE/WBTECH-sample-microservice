@@ -10,10 +10,11 @@ import (
 
 type Handler struct {
 	service *service.Service
+	logger  logger.Logger
 }
 
-func NewHandler(service *service.Service) *Handler {
-	return &Handler{service: service}
+func NewHandler(service *service.Service, logger logger.Logger) *Handler {
+	return &Handler{service: service, logger: logger}
 }
 
 func (h *Handler) InitRoutes() *gin.Engine {
@@ -25,15 +26,13 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			orders.GET("/:orderId", h.getOrder)
 		}
 	}
-
 	return router
 }
 
 func (h *Handler) getOrder(c *gin.Context) {
 	orderID := c.Param("orderId")
-	order, fromCache, err := h.service.GetOrder(orderID)
+	order, fromCache, err := h.service.GetOrder(orderID, h.logger)
 	if err != nil {
-		logger.LogError("error getting the order", err)
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid request data"})
 		return
 	}
