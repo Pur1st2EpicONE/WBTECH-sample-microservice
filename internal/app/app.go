@@ -26,9 +26,9 @@ type App struct {
 	logger   logger.Logger
 	logFile  *os.File
 	server   *server.Server
-	consumer *broker.Consumer
+	consumer broker.Consumer
 	cache    cache.Cache
-	storage  *repository.Storage
+	storage  repository.Storage
 	ctx      context.Context
 	Stop     context.CancelFunc
 	wg       *sync.WaitGroup
@@ -71,7 +71,7 @@ func Start() *App {
 		wg:       &wg}
 }
 
-func wireApp(db *sqlx.DB, config configs.App, logger logger.Logger) (*server.Server, cache.Cache, *repository.Storage) {
+func wireApp(db *sqlx.DB, config configs.App, logger logger.Logger) (*server.Server, cache.Cache, repository.Storage) {
 	storage := repository.NewStorage(db, logger)
 	cache := cache.NewCache(storage, 20*time.Second, logger)
 	service := service.NewService(storage, cache)

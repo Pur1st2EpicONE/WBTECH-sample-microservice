@@ -7,7 +7,7 @@ import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 )
 
-func (ps *PostgresStorer) GetOrder(orderUID string) (*models.Order, error) {
+func (ps *PostgresStorage) GetOrder(orderUID string) (*models.Order, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	var orderId int
@@ -21,7 +21,7 @@ func (ps *PostgresStorer) GetOrder(orderUID string) (*models.Order, error) {
 	return order, nil
 }
 
-func queryAllButItems(ctx context.Context, ps *PostgresStorer, order *models.Order, orderUID string, orderId *int) error {
+func queryAllButItems(ctx context.Context, ps *PostgresStorage, order *models.Order, orderUID string, orderId *int) error {
 	query := `SELECT 
 
         orders.id, 
@@ -102,7 +102,7 @@ func queryAllButItems(ctx context.Context, ps *PostgresStorer, order *models.Ord
 	return nil
 }
 
-func queryItems(ctx context.Context, ps *PostgresStorer, items *[]models.Item, orderId int) error {
+func queryItems(ctx context.Context, ps *PostgresStorage, items *[]models.Item, orderId int) error {
 	query := `SELECT 
         chrt_id,
         track_number,
@@ -147,7 +147,7 @@ func queryItems(ctx context.Context, ps *PostgresStorer, items *[]models.Item, o
 	return rows.Err()
 }
 
-func (ps *PostgresStorer) GetAllOrders() ([]*models.Order, error) {
+func (ps *PostgresStorage) GetAllOrders() ([]*models.Order, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

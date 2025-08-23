@@ -29,7 +29,7 @@ type CachedOrder struct {
 	lastAccess time.Time
 }
 
-func NewCache(storage repository.Storer, orderTTL time.Duration, logger logger.Logger) Cache {
+func NewCache(storage repository.Storage, orderTTL time.Duration, logger logger.Logger) Cache {
 	cachedOrders := make(map[string]*CachedOrder)
 
 	allOrders, err := storage.GetAllOrders()

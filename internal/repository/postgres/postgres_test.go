@@ -1,35 +1,64 @@
 package postgres_test
 
-// func TestPostgresStorer_PingClose_Coverage(t *testing.T) {
-// 	db, _, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-// 	if err != nil {
-// 		t.Fatalf("failed to open sqlmock: %v", err)
-// 	}
-// 	defer db.Close()
-// 	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"))
-// 	if err := ps.Ping(); err != nil {
-// 		t.Errorf("expected Ping success, got %v", err)
-// 	}
-// }
+import (
+	"errors"
+	"testing"
 
-// func TestPostgresStorer_SaveOrder_Integration(t *testing.T) {
-// 	if testing.Short() {
-// 		t.Skip("skipping integration test in short mode")
-// 	}
-// 	db, err := sqlx.Connect("postgres", "postgres://Neo:0451@localhost:5434/wb-service-db-test?sslmode=disable")
-// 	if err != nil {
-// 		t.Fatalf("failed to connect to db: %v", err)
-// 	}
-// 	defer db.Close()
+	"github.com/DATA-DOG/go-sqlmock"
+	mock_logger "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger/mocks"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository/postgres"
+	"github.com/golang/mock/gomock"
+	"github.com/jmoiron/sqlx"
+)
 
-// 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-// 	ps := postgres.NewPostgresStorer(db, logger)
+func TestPostgresStorer_Ping(t *testing.T) {
+	db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
 
-// 	order := kafka.CreateOrder(logger)
-// 	order.OrderUID = "aboba2"
-// 	order.Payment.Transaction = order.OrderUID
+	xdb := sqlx.NewDb(db, "sqlmock")
+	logger := mock_logger.NewMockLogger(gomock.NewController(t))
+	storer := postgres.NewPostgresStorage(xdb, logger)
 
-// 	if err := ps.SaveOrder(&order); err != nil {
-// 		t.Fatalf("SaveOrder failed: %v", err)
-// 	}
-// }
+	mock.ExpectPing()
+	if err := storer.Ping(); err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+
+	pingErr := errors.New("ping failed")
+	mock.ExpectPing().WillReturnError(pingErr)
+	if err := storer.Ping(); !errors.Is(err, pingErr) {
+		t.Errorf("expected pingErr, got %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %v", err)
+	}
+}
+
+func TestPostgresStorer_Close_Success(t *testing.T) {
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+
+	mockLogger := mock_logger.NewMockLogger(controller)
+
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	mock.ExpectClose()
+
+	xdb := sqlx.NewDb(db, "sqlmock")
+	storer := postgres.NewPostgresStorage(xdb, mockLogger)
+
+	mockLogger.EXPECT().LogInfo("postgres — stopped").Times(1)
+
+	storer.Close()
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("unfulfilled db expectations: %v", err)
+	}
+}

@@ -12,7 +12,7 @@ import (
 
 //go:generate mockgen -source=repository.go -destination=mocks/mock.go
 
-type Storer interface {
+type Storage interface {
 	SaveOrder(order *models.Order) error
 	GetOrder(id string) (*models.Order, error)
 	GetAllOrders() ([]*models.Order, error)
@@ -20,12 +20,8 @@ type Storer interface {
 	Close()
 }
 
-type Storage struct {
-	Storer
-}
-
-func NewStorage(db *sqlx.DB, logger logger.Logger) *Storage {
-	return &Storage{Storer: postgres.NewPostgresStorer(db, logger)}
+func NewStorage(db *sqlx.DB, logger logger.Logger) Storage {
+	return postgres.NewPostgresStorage(db, logger)
 }
 
 func ConnectDB(config configs.Database) (*sqlx.DB, error) {

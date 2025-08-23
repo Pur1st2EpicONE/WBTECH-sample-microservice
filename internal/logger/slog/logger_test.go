@@ -2,40 +2,43 @@ package slog_test
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
-	"sync"
 	"testing"
 
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger/slog"
 )
 
-func TestLogger_LogInfo_LogError(t *testing.T) {
-	file, err := os.CreateTemp("", "log_test_*.json")
+func TestLogger_toDir(t *testing.T) {
+	tmpDir := t.TempDir()
+	l1, logFile1 := slog.NewLogger(tmpDir)
+	defer logFile1.Close()
+
+	l1.LogInfo("very informative log")
+
+	data, err := os.ReadFile(filepath.Join(tmpDir, "app.log"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.Remove(file.Name())
+	if !strings.Contains(string(data), "very informative log") {
+		t.Errorf("expected log in file, got: %s", string(data))
+	}
+	l2, logFile2 := slog.NewLogger("/root")
 
-	var wg sync.WaitGroup
-	wg.Add(1)
+	if logFile2 != os.Stdout {
+		t.Errorf("expected stdout fallback, got: %v", logFile2)
+	}
+	l2.LogInfo("very informative log — stdout")
+}
 
-	logger, _ := slog.NewLogger("")
-
-	logger.LogInfo("info message", "arg1", 123)
-	logger.LogError("error message", nil)
-	logger.LogError("error with err", os.ErrInvalid)
-	wg.Done()
-
-	data, err := os.ReadFile(file.Name())
-	if err != nil {
-		t.Fatal(err)
+func TestLogger_toStdout(t *testing.T) {
+	l, logDest := logger.NewLogger("")
+	if logDest != os.Stdout {
+		t.Errorf("expected stdout, got %v", logDest)
 	}
 
-	content := string(data)
-	if !strings.Contains(content, "info message") {
-		t.Errorf("expected info message in log, got: %s", content)
-	}
-	if !strings.Contains(content, "error message") || !strings.Contains(content, "error with err") {
-		t.Errorf("expected error messages in log, got: %s", content)
-	}
+	l.LogInfo("info message")
+	l.LogError("error message", nil)
+	l.LogError("error with err", os.ErrInvalid)
 }

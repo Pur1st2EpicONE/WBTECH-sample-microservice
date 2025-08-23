@@ -41,7 +41,7 @@ func toMap(config configs.Consumer) *kafka.ConfigMap {
 	}
 }
 
-func (c *KafkaConsumer) Run(ctx context.Context, storage *repository.Storage, logger logger.Logger) {
+func (c *KafkaConsumer) Run(ctx context.Context, storage repository.Storage, logger logger.Logger) {
 	logger.LogInfo("consumer — receiving orders")
 	for {
 		select {
@@ -57,7 +57,7 @@ func (c *KafkaConsumer) Run(ctx context.Context, storage *repository.Storage, lo
 				var lastErr error
 				retryCnt := 0
 				for retryCnt < maxRetries {
-					if err := c.handler.SaveOrder(eventType.Value, *storage, logger); err != nil {
+					if err := c.handler.SaveOrder(eventType.Value, storage, logger); err != nil {
 						lastErr = err
 						retryCnt++
 						if retryCnt < maxRetries {

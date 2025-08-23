@@ -39,9 +39,12 @@ test-pg:
 	@until docker exec postgres_test pg_isready -U Neo > /dev/null 2>&1; do sleep 0.5; done
 	@sleep 10
 	@migrate -path ./schema -database 'postgres://Neo:0451@localhost:5434/wb-service-db-test?sslmode=disable' up
-	go test ./... -coverprofile=coverage.out -v
-	go tool cover -html=coverage.out -o cover.html
-	rm -f coverage.out
+	@go test ./... -coverpkg=./... -coverprofile=coverage.out -v
+	@go tool cover -html=coverage.out -o cover.html
+	@grep -v "/mocks/" coverage.out > coverage_filtered.out
+	@go tool cover -func=coverage_filtered.out
+	@rm -f coverage.out
+	@rm -f coverage_filtered.out
 	-@docker-compose down
 
 coverage:

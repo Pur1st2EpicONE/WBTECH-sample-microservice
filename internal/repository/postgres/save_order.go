@@ -9,7 +9,7 @@ import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 )
 
-func (ps *PostgresStorer) SaveOrder(order *models.Order) error {
+func (ps *PostgresStorage) SaveOrder(order *models.Order) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	tx, err := ps.db.BeginTx(ctx, nil)

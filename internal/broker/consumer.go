@@ -9,19 +9,11 @@ import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository"
 )
 
-type EventConsumer interface {
-	Run(ctx context.Context, storage *repository.Storage, logger logger.Logger)
+type Consumer interface {
+	Run(ctx context.Context, storage repository.Storage, logger logger.Logger)
 	Close(logger logger.Logger)
 }
 
-type Consumer struct {
-	EventConsumer
-}
-
-func NewConsumer(config configs.Consumer) (*Consumer, error) {
-	consumer, err := kafka.NewConsumer(config)
-	if err != nil {
-		return nil, err
-	}
-	return &Consumer{EventConsumer: consumer}, nil
+func NewConsumer(config configs.Consumer) (Consumer, error) {
+	return kafka.NewConsumer(config)
 }

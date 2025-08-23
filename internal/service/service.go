@@ -11,10 +11,10 @@ type ServiceProvider interface {
 }
 
 type Service struct {
-	Storage repository.Storer
+	Storage repository.Storage
 	Cache   cache.Cache
 }
 
-func NewService(storage repository.Storer, cache cache.Cache) *Service {
+func NewService(storage repository.Storage, cache cache.Cache) *Service {
 	return &Service{Storage: storage, Cache: cache}
 }

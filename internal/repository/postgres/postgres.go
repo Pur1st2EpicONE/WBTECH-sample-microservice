@@ -6,20 +6,20 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type PostgresStorer struct {
+type PostgresStorage struct {
 	db     *sqlx.DB
 	logger logger.Logger
 }
 
-func NewPostgresStorer(db *sqlx.DB, logger logger.Logger) *PostgresStorer {
-	return &PostgresStorer{db: db, logger: logger}
+func NewPostgresStorage(db *sqlx.DB, logger logger.Logger) *PostgresStorage {
+	return &PostgresStorage{db: db, logger: logger}
 }
 
-func (p *PostgresStorer) Ping() error {
+func (p *PostgresStorage) Ping() error {
 	return p.db.Ping()
 }
 
-func (p *PostgresStorer) Close() {
+func (p *PostgresStorage) Close() {
 	if err := p.db.Close(); err != nil {
 		p.logger.LogError("postgres — failed to close properly", err)
 	} else {

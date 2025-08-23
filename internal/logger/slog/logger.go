@@ -1,9 +1,10 @@
 package slog
 
 import (
-	"log"
+	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 )
 
 type Logger struct {
@@ -16,12 +17,28 @@ func NewLogger(logDir string) (*Logger, *os.File) {
 		logDest = os.Stdout
 	} else {
 		logDest = openFile(logDir)
-
+		if logDest == nil {
+			logDest = os.Stdout
+		}
 	}
 	handler := slog.NewJSONHandler(logDest, nil)
 	logger := &Logger{logger: slog.New(handler)}
 	slog.SetDefault(logger.logger)
 	return logger, logDest
+}
+
+func openFile(logDir string) *os.File {
+	if err := os.MkdirAll(logDir, 0777); err != nil {
+		fmt.Fprintf(os.Stderr, "logger — failed to create log directory switching to stdout: %v\n", err)
+		return nil
+	}
+	logPath := filepath.Join(logDir, "app.log")
+	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0777)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "logger — failed to create log file switching to stdout: %v\n", err)
+		return nil
+	}
+	return logFile
 }
 
 func (l *Logger) LogFatal(msg string, err error) {
@@ -39,16 +56,4 @@ func (l *Logger) LogError(msg string, err error) {
 
 func (l *Logger) LogInfo(msg string, args ...any) {
 	slog.Info(msg, args...)
-}
-
-func openFile(logDir string) *os.File {
-	if err := os.MkdirAll(logDir, 0777); err != nil {
-		log.Fatalf("logger — failed to create log directory: %v", err)
-	}
-	logFile, err := os.OpenFile("./logs/app.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0777)
-	if err != nil {
-		log.Fatalf("logger — failed to create log file: %v", err)
-	}
-
-	return logFile
 }

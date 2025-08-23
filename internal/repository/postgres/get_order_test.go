@@ -20,7 +20,7 @@ func TestPostgresStorer_GetOrder_Success(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
+	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	orderUID := "test-uid"
 	orderID := 1
@@ -191,7 +191,7 @@ func TestPostgresStorer_QueryAllButItems_RowsScanError(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
+	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	orderQuery := `SELECT
 
@@ -248,7 +248,7 @@ func TestPostgresStorer_QueryItems_RowsScanError(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
+	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	paymentTime := time.Now()
 
@@ -411,7 +411,7 @@ func TestPostgresStorer_QueryItems_QueryContextError(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
+	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	paymentTime := time.Now()
 
@@ -547,7 +547,7 @@ func TestPostgresStorer_GetAllOrders_Success(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
+	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	orderID := 1
 	paymentTime := time.Now()
@@ -714,7 +714,7 @@ func TestPostgresStorer_GetAllOrders_QueryContextError(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
+	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	allQuery := `SELECT
 
@@ -770,7 +770,7 @@ func TestPostgresStorer_GetAllOrders_RowsScanError(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
+	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	allQuery := `SELECT
 

@@ -20,7 +20,7 @@ func TestPostgresStorer_SaveOrder_Success(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
+	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	order := &models.Order{
 		Items: []models.Item{
@@ -81,7 +81,7 @@ func TestPostgresStorer_SaveOrder_BeginTxError(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
+	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	mock.ExpectBegin().WillReturnError(fmt.Errorf("begin failed"))
 
@@ -102,7 +102,7 @@ func TestPostgresStorer_InsertOrder_Rollback(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
+	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	mock.ExpectBegin()
 
@@ -141,7 +141,7 @@ func TestPostgresStorer_InsertDelivery_Rollback(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
+	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	mock.ExpectBegin()
 
@@ -178,7 +178,7 @@ func TestPostgresStorer_InsertPayment_Rollback(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
+	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	mock.ExpectBegin()
 
@@ -217,7 +217,7 @@ func TestPostgresStorer_InsertItem_Rollback(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
+	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	order := &models.Order{
 		Items: []models.Item{
@@ -278,7 +278,7 @@ func TestPostgresStorer_SaveOrder_CommitError(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorer(sqlx.NewDb(db, "postgres"), logger)
+	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	order := &models.Order{
 		Items: []models.Item{

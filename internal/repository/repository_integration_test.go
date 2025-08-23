@@ -39,7 +39,7 @@ func TestConnectDB_Success_Integration(t *testing.T) {
 	}
 	defer db.Close()
 
-	ps := postgres.NewPostgresStorer(db, logger)
+	ps := postgres.NewPostgresStorage(db, logger)
 
 	if err := ps.Ping(); err != nil {
 		t.Fatalf("Ping failed: %v", err)
@@ -59,7 +59,7 @@ func TestPostgresStorer_SaveOrder_Integration(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := repository.NewStorage(db, logger).Storer.(*postgres.PostgresStorer)
+	ps := repository.NewStorage(db, logger)
 
 	order := kafka.CreateOrder(logger)
 	order.OrderUID = "1"
@@ -81,7 +81,7 @@ func TestPostgresStorer_GetOrder_Integration(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := repository.NewStorage(db, logger).Storer.(*postgres.PostgresStorer)
+	ps := repository.NewStorage(db, logger)
 
 	order, err := ps.GetOrder("1")
 	if err != nil {
@@ -103,7 +103,7 @@ func TestPostgresStorer_SaveAndGetOrder_Integration(t *testing.T) {
 	}
 	defer db.Close()
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := repository.NewStorage(db, logger).Storer.(*postgres.PostgresStorer)
+	ps := repository.NewStorage(db, logger)
 
 	order := kafka.CreateOrder(logger)
 

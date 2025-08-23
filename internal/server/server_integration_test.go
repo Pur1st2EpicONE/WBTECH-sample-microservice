@@ -3,37 +3,30 @@ package server_test
 import (
 	"context"
 	"net/http"
-	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger/slog"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/server"
 )
 
-func TestServer_RunAndShutdown_WithSlog(t *testing.T) {
-	logFile, err := os.CreateTemp("", "server_log_*.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.Remove(logFile.Name())
+func TestServer_RunAndShutdown_WithLogger(t *testing.T) {
+	tmpDir := t.TempDir()
+	logger, logFile := logger.NewLogger(tmpDir)
 	defer logFile.Close()
 
-	logger, _ := slog.NewLogger("")
 	handlerCalled := false
 	fakeHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		handlerCalled = true
 		w.WriteHeader(http.StatusOK)
 	})
 
-	ts := httptest.NewServer(fakeHandler)
-	defer ts.Close()
-
 	srv := &server.Server{
 		HttpServer: &http.Server{
-			Addr:    ts.Listener.Addr().String(),
+			Addr:    "localhost:8085",
 			Handler: fakeHandler,
 		},
 	}
@@ -44,7 +37,7 @@ func TestServer_RunAndShutdown_WithSlog(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond)
 
-	resp, err := http.Get("http://" + ts.Listener.Addr().String())
+	resp, err := http.Get("http://" + srv.HttpServer.Addr)
 	if err != nil {
 		t.Fatalf("failed to GET: %v", err)
 	}
@@ -59,11 +52,13 @@ func TestServer_RunAndShutdown_WithSlog(t *testing.T) {
 
 	srv.Shutdown(context.Background(), logger)
 
-	data, err := os.ReadFile(logFile.Name())
+	logPath := filepath.Join(tmpDir, "app.log")
+	data, err := os.ReadFile(logPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 	content := string(data)
+
 	if !strings.Contains(content, "server — receiving requests") {
 		t.Error("log does not contain 'server — receiving requests'")
 	}
