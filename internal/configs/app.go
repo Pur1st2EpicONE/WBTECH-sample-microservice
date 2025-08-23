@@ -13,6 +13,7 @@ type App struct {
 	Server   Server
 	Database Database
 	Consumer Consumer
+	Cache    Cache
 }
 
 type Server struct {
@@ -32,6 +33,14 @@ type Database struct {
 	SSLMode  string
 }
 
+type Cache struct {
+	SaveInCache   bool
+	CacheSize     int
+	BgCleanup     bool
+	CleanupPeriod time.Duration
+	OrderTTL      time.Duration
+}
+
 func Load() (App, error) {
 	if err := godotenv.Load(); err != nil {
 		return App{}, fmt.Errorf("godotenv — failed to %v", err) // phrasing is odd here, but gives a clean error message in logs
@@ -47,6 +56,7 @@ func Load() (App, error) {
 	return App{
 		Server:   srvConfig(),
 		Database: dbConfig(),
+		Cache:    cacheConfig(),
 		Consumer: consConfig(),
 	}, nil
 }
@@ -76,5 +86,15 @@ func dbConfig() Database {
 		Password: os.Getenv("DB_PASSWORD"),
 		DBName:   viper.GetString("database.dbname"),
 		SSLMode:  viper.GetString("database.sslmode"),
+	}
+}
+
+func cacheConfig() Cache {
+	return Cache{
+		SaveInCache:   viper.GetBool("cache.save_in_cache"),
+		CacheSize:     viper.GetInt("cache.cache_size"),
+		BgCleanup:     viper.GetBool("cache.background_cleanup"),
+		CleanupPeriod: viper.GetDuration("cache.cleanup_period"),
+		OrderTTL:      viper.GetDuration("cache.order_ttl"),
 	}
 }

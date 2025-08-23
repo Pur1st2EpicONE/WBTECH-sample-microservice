@@ -15,7 +15,7 @@ import (
 type Storage interface {
 	SaveOrder(order *models.Order) error
 	GetOrder(id string) (*models.Order, error)
-	GetAllOrders() ([]*models.Order, error)
+	GetOrders(amount ...int) ([]*models.Order, error)
 	Ping() error
 	Close()
 }

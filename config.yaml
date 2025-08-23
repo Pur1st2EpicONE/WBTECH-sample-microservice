@@ -12,6 +12,13 @@ database:
   dbname: wb-service-db
   sslmode: disable
 
+cache:
+  save_in_cache: true
+  cache_size: 10
+  background_cleanup: true
+  cleanup_period: 30s
+  order_ttl: 40s
+
 kafka:
   consumer:
     brokers:

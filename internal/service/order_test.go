@@ -12,27 +12,27 @@ import (
 )
 
 func TestNewService(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	controller := gomock.NewController(t)
+	defer controller.Finish()
 
-	mockStorer := mock_repo.NewMockStorer(ctrl)
-	mockCacher := mock_cache.NewMockCache(ctrl)
+	mockStorage := mock_repo.NewMockStorage(controller)
+	mockCacher := mock_cache.NewMockCache(controller)
 
-	service := NewService(mockStorer, mockCacher)
+	service := NewService(mockStorage, mockCacher)
 	if service == nil {
 		t.Fatal("expected service, got nil")
 	}
 }
 
 func TestService_GetOrder_CacheHit(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	controller := gomock.NewController(t)
+	defer controller.Finish()
 
-	mockStorer := mock_repo.NewMockStorer(ctrl)
-	mockCacher := mock_cache.NewMockCache(ctrl)
+	mockStorage := mock_repo.NewMockStorage(controller)
+	mockCacher := mock_cache.NewMockCache(controller)
 
 	service := &Service{
-		Storage: mockStorer,
+		Storage: mockStorage,
 		Cache:   mockCacher,
 	}
 
@@ -54,15 +54,15 @@ func TestService_GetOrder_CacheHit(t *testing.T) {
 }
 
 func TestService_GetOrder_CacheMiss(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	controller := gomock.NewController(t)
+	defer controller.Finish()
 
-	mockStorer := mock_repo.NewMockStorer(ctrl)
-	mockCacher := mock_cache.NewMockCache(ctrl)
+	mockStorage := mock_repo.NewMockStorage(controller)
+	mockCacher := mock_cache.NewMockCache(controller)
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 
 	service := &Service{
-		Storage: mockStorer,
+		Storage: mockStorage,
 		Cache:   mockCacher,
 	}
 
@@ -70,7 +70,7 @@ func TestService_GetOrder_CacheMiss(t *testing.T) {
 	expectedOrder := &models.Order{OrderUID: orderID}
 
 	mockCacher.EXPECT().GetCachedOrder(orderID).Return(nil, false)
-	mockStorer.EXPECT().GetOrder(orderID).Return(expectedOrder, nil)
+	mockStorage.EXPECT().GetOrder(orderID).Return(expectedOrder, nil)
 	mockCacher.EXPECT().CacheOrder(expectedOrder, logger)
 
 	order, found, err := service.GetOrder(orderID, logger)
@@ -86,21 +86,21 @@ func TestService_GetOrder_CacheMiss(t *testing.T) {
 }
 
 func TestService_GetOrder_FromDB_NotFound(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	controller := gomock.NewController(t)
+	defer controller.Finish()
 
-	mockStorer := mock_repo.NewMockStorer(ctrl)
-	mockCacher := mock_cache.NewMockCache(ctrl)
+	mockStorage := mock_repo.NewMockStorage(controller)
+	mockCacher := mock_cache.NewMockCache(controller)
 
 	service := &Service{
-		Storage: mockStorer,
+		Storage: mockStorage,
 		Cache:   mockCacher,
 	}
 
 	orderID := "0"
 
 	mockCacher.EXPECT().GetCachedOrder(orderID).Return(nil, false)
-	mockStorer.EXPECT().GetOrder(orderID).Return(nil, fmt.Errorf("order not found in storage"))
+	mockStorage.EXPECT().GetOrder(orderID).Return(nil, fmt.Errorf("order not found in storage"))
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 
 	order, fromCache, err := service.GetOrder(orderID, logger)

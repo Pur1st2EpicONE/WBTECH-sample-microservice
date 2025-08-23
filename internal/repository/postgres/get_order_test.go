@@ -533,7 +533,7 @@ func TestPostgresStorer_QueryItems_QueryContextError(t *testing.T) {
 
 	mock.ExpectQuery(itemsQuery).WithArgs(sqlmock.AnyArg()).WillReturnError(fmt.Errorf("items query failed"))
 
-	_, err = ps.GetAllOrders()
+	_, err = ps.GetOrders()
 	if err == nil || err.Error() != "items query failed" {
 		t.Fatalf("expected items query error, got: %v", err)
 	}
@@ -694,7 +694,7 @@ func TestPostgresStorer_GetAllOrders_Success(t *testing.T) {
 		1,
 	))
 
-	orders, err := ps.GetAllOrders()
+	orders, err := ps.GetOrders()
 	if err != nil {
 		t.Fatalf("expected success, got error: %v", err)
 	}
@@ -756,7 +756,7 @@ func TestPostgresStorer_GetAllOrders_QueryContextError(t *testing.T) {
 
 	mock.ExpectQuery(allQuery).WillReturnError(fmt.Errorf("all orders query failed"))
 
-	_, err = ps.GetAllOrders()
+	_, err = ps.GetOrders()
 	if err == nil || err.Error() != "all orders query failed" {
 		t.Fatalf("expected all orders query error, got: %v", err)
 	}
@@ -873,7 +873,7 @@ func TestPostgresStorer_GetAllOrders_RowsScanError(t *testing.T) {
 		0,
 	))
 
-	_, err = ps.GetAllOrders()
+	_, err = ps.GetOrders()
 	if err == nil {
 		t.Fatalf("expected scan error, got nil")
 	}

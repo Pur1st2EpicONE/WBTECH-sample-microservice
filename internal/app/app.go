@@ -73,7 +73,7 @@ func Start() *App {
 
 func wireApp(db *sqlx.DB, config configs.App, logger logger.Logger) (*server.Server, cache.Cache, repository.Storage) {
 	storage := repository.NewStorage(db, logger)
-	cache := cache.NewCache(storage, 20*time.Second, logger)
+	cache := cache.NewCache(storage, config.Cache, logger)
 	service := service.NewService(storage, cache)
 	handler := (handler.NewHandler(service, logger)).InitRoutes()
 	server := server.NewServer(config.Server, handler)

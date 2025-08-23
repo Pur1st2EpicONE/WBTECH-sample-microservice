@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
@@ -147,7 +148,7 @@ func queryItems(ctx context.Context, ps *PostgresStorage, items *[]models.Item, 
 	return rows.Err()
 }
 
-func (ps *PostgresStorage) GetAllOrders() ([]*models.Order, error) {
+func (ps *PostgresStorage) GetOrders(amount ...int) ([]*models.Order, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -189,6 +190,10 @@ func (ps *PostgresStorage) GetAllOrders() ([]*models.Order, error) {
     JOIN deliveries ON orders.id = deliveries.order_id
     JOIN payments ON orders.id = payments.order_id`
 
+	if len(amount) > 0 && amount[0] > 0 {
+		query += fmt.Sprintf(" LIMIT %d", amount[0])
+	}
+
 	rows, err := ps.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -202,7 +207,8 @@ func (ps *PostgresStorage) GetAllOrders() ([]*models.Order, error) {
 		order := new(models.Order)
 		var paymentTime time.Time
 
-		err := rows.Scan(&orderId,
+		err := rows.Scan(
+			&orderId,
 			&order.OrderUID,
 			&order.TrackNumber,
 			&order.Entry,

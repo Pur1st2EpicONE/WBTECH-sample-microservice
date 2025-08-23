@@ -11,58 +11,43 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockStorer is a mock of Storer interface.
-type MockStorer struct {
+// MockStorage is a mock of Storage interface.
+type MockStorage struct {
 	ctrl     *gomock.Controller
-	recorder *MockStorerMockRecorder
+	recorder *MockStorageMockRecorder
 }
 
-// MockStorerMockRecorder is the mock recorder for MockStorer.
-type MockStorerMockRecorder struct {
-	mock *MockStorer
+// MockStorageMockRecorder is the mock recorder for MockStorage.
+type MockStorageMockRecorder struct {
+	mock *MockStorage
 }
 
-// NewMockStorer creates a new mock instance.
-func NewMockStorer(ctrl *gomock.Controller) *MockStorer {
-	mock := &MockStorer{ctrl: ctrl}
-	mock.recorder = &MockStorerMockRecorder{mock}
+// NewMockStorage creates a new mock instance.
+func NewMockStorage(ctrl *gomock.Controller) *MockStorage {
+	mock := &MockStorage{ctrl: ctrl}
+	mock.recorder = &MockStorageMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockStorer) EXPECT() *MockStorerMockRecorder {
+func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 	return m.recorder
 }
 
 // Close mocks base method.
-func (m *MockStorer) Close() {
+func (m *MockStorage) Close() {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Close")
 }
 
 // Close indicates an expected call of Close.
-func (mr *MockStorerMockRecorder) Close() *gomock.Call {
+func (mr *MockStorageMockRecorder) Close() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockStorer)(nil).Close))
-}
-
-// GetAllOrders mocks base method.
-func (m *MockStorer) GetAllOrders() ([]*models.Order, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllOrders")
-	ret0, _ := ret[0].([]*models.Order)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAllOrders indicates an expected call of GetAllOrders.
-func (mr *MockStorerMockRecorder) GetAllOrders() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllOrders", reflect.TypeOf((*MockStorer)(nil).GetAllOrders))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockStorage)(nil).Close))
 }
 
 // GetOrder mocks base method.
-func (m *MockStorer) GetOrder(id string) (*models.Order, error) {
+func (m *MockStorage) GetOrder(id string) (*models.Order, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetOrder", id)
 	ret0, _ := ret[0].(*models.Order)
@@ -71,13 +56,32 @@ func (m *MockStorer) GetOrder(id string) (*models.Order, error) {
 }
 
 // GetOrder indicates an expected call of GetOrder.
-func (mr *MockStorerMockRecorder) GetOrder(id interface{}) *gomock.Call {
+func (mr *MockStorageMockRecorder) GetOrder(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrder", reflect.TypeOf((*MockStorer)(nil).GetOrder), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrder", reflect.TypeOf((*MockStorage)(nil).GetOrder), id)
+}
+
+// GetOrders mocks base method.
+func (m *MockStorage) GetOrders(amount ...int) ([]*models.Order, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{}
+	for _, a := range amount {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetOrders", varargs...)
+	ret0, _ := ret[0].([]*models.Order)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOrders indicates an expected call of GetOrders.
+func (mr *MockStorageMockRecorder) GetOrders(amount ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrders", reflect.TypeOf((*MockStorage)(nil).GetOrders), amount...)
 }
 
 // Ping mocks base method.
-func (m *MockStorer) Ping() error {
+func (m *MockStorage) Ping() error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Ping")
 	ret0, _ := ret[0].(error)
@@ -85,13 +89,13 @@ func (m *MockStorer) Ping() error {
 }
 
 // Ping indicates an expected call of Ping.
-func (mr *MockStorerMockRecorder) Ping() *gomock.Call {
+func (mr *MockStorageMockRecorder) Ping() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockStorer)(nil).Ping))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockStorage)(nil).Ping))
 }
 
 // SaveOrder mocks base method.
-func (m *MockStorer) SaveOrder(order *models.Order) error {
+func (m *MockStorage) SaveOrder(order *models.Order) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveOrder", order)
 	ret0, _ := ret[0].(error)
@@ -99,7 +103,7 @@ func (m *MockStorer) SaveOrder(order *models.Order) error {
 }
 
 // SaveOrder indicates an expected call of SaveOrder.
-func (mr *MockStorerMockRecorder) SaveOrder(order interface{}) *gomock.Call {
+func (mr *MockStorageMockRecorder) SaveOrder(order interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveOrder", reflect.TypeOf((*MockStorer)(nil).SaveOrder), order)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveOrder", reflect.TypeOf((*MockStorage)(nil).SaveOrder), order)
 }
