@@ -14,6 +14,10 @@ type Consumer interface {
 	Close(logger logger.Logger)
 }
 
-func NewConsumer(config configs.Consumer) (Consumer, error) {
-	return kafka.NewConsumer(config)
+func NewConsumer(config configs.Consumer, logger logger.Logger) (Consumer, error) {
+	consumer, err := kafka.NewConsumer(config, logger)
+	if err != nil {
+		return nil, err
+	}
+	return consumer, nil
 }

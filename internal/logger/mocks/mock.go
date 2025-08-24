@@ -5,9 +5,7 @@
 package mock_logger
 
 import (
-	os "os"
 	reflect "reflect"
-	sync "sync"
 
 	gomock "github.com/golang/mock/gomock"
 )
@@ -35,40 +33,38 @@ func (m *MockLogger) EXPECT() *MockLoggerMockRecorder {
 	return m.recorder
 }
 
-// CloseFile mocks base method.
-func (m *MockLogger) CloseFile(file *os.File) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "CloseFile", file)
-}
-
-// CloseFile indicates an expected call of CloseFile.
-func (mr *MockLoggerMockRecorder) CloseFile(file interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CloseFile", reflect.TypeOf((*MockLogger)(nil).CloseFile), file)
-}
-
 // LogError mocks base method.
-func (m *MockLogger) LogError(msg string, err error) {
+func (m *MockLogger) LogError(arg0 string, arg1 error, arg2 ...any) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "LogError", msg, err)
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	m.ctrl.Call(m, "LogError", varargs...)
 }
 
 // LogError indicates an expected call of LogError.
-func (mr *MockLoggerMockRecorder) LogError(msg, err interface{}) *gomock.Call {
+func (mr *MockLoggerMockRecorder) LogError(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LogError", reflect.TypeOf((*MockLogger)(nil).LogError), msg, err)
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LogError", reflect.TypeOf((*MockLogger)(nil).LogError), varargs...)
 }
 
 // LogFatal mocks base method.
-func (m *MockLogger) LogFatal(msg string, err error) {
+func (m *MockLogger) LogFatal(msg string, err error, args ...any) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "LogFatal", msg, err)
+	varargs := []interface{}{msg, err}
+	for _, a := range args {
+		varargs = append(varargs, a)
+	}
+	m.ctrl.Call(m, "LogFatal", varargs...)
 }
 
 // LogFatal indicates an expected call of LogFatal.
-func (mr *MockLoggerMockRecorder) LogFatal(msg, err interface{}) *gomock.Call {
+func (mr *MockLoggerMockRecorder) LogFatal(msg, err interface{}, args ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LogFatal", reflect.TypeOf((*MockLogger)(nil).LogFatal), msg, err)
+	varargs := append([]interface{}{msg, err}, args...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LogFatal", reflect.TypeOf((*MockLogger)(nil).LogFatal), varargs...)
 }
 
 // LogInfo mocks base method.
@@ -86,30 +82,4 @@ func (mr *MockLoggerMockRecorder) LogInfo(msg interface{}, args ...interface{}) 
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{msg}, args...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LogInfo", reflect.TypeOf((*MockLogger)(nil).LogInfo), varargs...)
-}
-
-// OpenFile mocks base method.
-func (m *MockLogger) OpenFile() *os.File {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "OpenFile")
-	ret0, _ := ret[0].(*os.File)
-	return ret0
-}
-
-// OpenFile indicates an expected call of OpenFile.
-func (mr *MockLoggerMockRecorder) OpenFile() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OpenFile", reflect.TypeOf((*MockLogger)(nil).OpenFile))
-}
-
-// Run mocks base method.
-func (m *MockLogger) Run(wg *sync.WaitGroup) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Run", wg)
-}
-
-// Run indicates an expected call of Run.
-func (mr *MockLoggerMockRecorder) Run(wg interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockLogger)(nil).Run), wg)
 }

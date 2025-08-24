@@ -20,7 +20,7 @@ func TestPostgresStorer_SaveOrder_Success(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
+	s := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	order := &models.Order{
 		Items: []models.Item{
@@ -64,7 +64,7 @@ func TestPostgresStorer_SaveOrder_Success(t *testing.T) {
 
 	mock.ExpectCommit()
 
-	err = ps.SaveOrder(order)
+	err = s.SaveOrder(order)
 	if err != nil {
 		t.Fatalf("expected success, got error: %v", err)
 	}
@@ -81,11 +81,11 @@ func TestPostgresStorer_SaveOrder_BeginTxError(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
+	s := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	mock.ExpectBegin().WillReturnError(fmt.Errorf("begin failed"))
 
-	err = ps.SaveOrder(new(models.Order))
+	err = s.SaveOrder(new(models.Order))
 	if err == nil {
 		t.Fatalf("expected begin error, got %v", err)
 	}
@@ -102,7 +102,7 @@ func TestPostgresStorer_InsertOrder_Rollback(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
+	s := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	mock.ExpectBegin()
 
@@ -124,7 +124,7 @@ func TestPostgresStorer_InsertOrder_Rollback(t *testing.T) {
 
 	mock.ExpectRollback()
 
-	err = ps.SaveOrder(new(models.Order))
+	err = s.SaveOrder(new(models.Order))
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -141,7 +141,7 @@ func TestPostgresStorer_InsertDelivery_Rollback(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
+	s := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	mock.ExpectBegin()
 
@@ -161,7 +161,7 @@ func TestPostgresStorer_InsertDelivery_Rollback(t *testing.T) {
 
 	mock.ExpectRollback()
 
-	err = ps.SaveOrder(new(models.Order))
+	err = s.SaveOrder(new(models.Order))
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -178,7 +178,7 @@ func TestPostgresStorer_InsertPayment_Rollback(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
+	s := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	mock.ExpectBegin()
 
@@ -200,7 +200,7 @@ func TestPostgresStorer_InsertPayment_Rollback(t *testing.T) {
 
 	mock.ExpectRollback()
 
-	err = ps.SaveOrder(new(models.Order))
+	err = s.SaveOrder(new(models.Order))
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -217,7 +217,7 @@ func TestPostgresStorer_InsertItem_Rollback(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
+	s := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	order := &models.Order{
 		Items: []models.Item{
@@ -261,7 +261,7 @@ func TestPostgresStorer_InsertItem_Rollback(t *testing.T) {
 
 	mock.ExpectRollback()
 
-	err = ps.SaveOrder(order)
+	err = s.SaveOrder(order)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -278,7 +278,7 @@ func TestPostgresStorer_SaveOrder_CommitError(t *testing.T) {
 	defer db.Close()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
+	s := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	order := &models.Order{
 		Items: []models.Item{
@@ -307,7 +307,7 @@ func TestPostgresStorer_SaveOrder_CommitError(t *testing.T) {
 
 	mock.ExpectCommit().WillReturnError(fmt.Errorf("commit failed"))
 
-	err = ps.SaveOrder(order)
+	err = s.SaveOrder(order)
 	if err == nil {
 		t.Fatalf("expected commit error, got %v", err)
 	}

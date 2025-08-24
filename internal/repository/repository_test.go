@@ -20,7 +20,7 @@ func TestPostgresStorer_SaveOrder_Success(t *testing.T) { // integration?
 	}
 	defer db.Close()
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	ps := postgres.NewPostgresStorage(sqlx.NewDb(db, "postgres"), logger)
+	ps := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
 
 	order := &models.Order{
 		OrderUID: "123",

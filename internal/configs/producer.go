@@ -1,6 +1,8 @@
 package configs
 
 import (
+	"time"
+
 	"github.com/spf13/viper"
 )
 
@@ -10,8 +12,6 @@ type Producer struct {
 	ClientID      string
 	TotalMessages int
 	Kafka         *KafkaProducer
-	NATS          *NATSProducer
-	RabbitMQ      *RabbitMQProducer
 }
 
 type KafkaProducer struct {
@@ -23,18 +23,14 @@ type KafkaProducer struct {
 	CompressionType   string
 }
 
-type NATSProducer struct {
-	Subject   string
-	Queue     string
-	Durable   string
-	AckWaitMs int
-}
-
-type RabbitMQProducer struct {
-	Exchange   string
-	RoutingKey string
-	Mandatory  bool
-	Immediate  bool
+type Message struct {
+	Topic     string
+	Key       []byte
+	Value     []byte
+	Headers   map[string]string
+	Timestamp time.Time
+	Metadata  map[string]any
+	DLQ       bool
 }
 
 func ProdConfig() (Producer, error) {
@@ -50,8 +46,6 @@ func ProdConfig() (Producer, error) {
 		ClientID:      viper.GetString("kafka.producer.client_id"),
 		TotalMessages: viper.GetInt("kafka.producer.total_messages"),
 		Kafka:         kafkaProdConfig(),
-		NATS:          nil,
-		RabbitMQ:      nil,
 	}, nil
 }
 

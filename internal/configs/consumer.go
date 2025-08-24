@@ -1,6 +1,8 @@
 package configs
 
-import "github.com/spf13/viper"
+import (
+	"github.com/spf13/viper"
+)
 
 type Consumer struct {
 	Brokers           []string
@@ -10,9 +12,8 @@ type Consumer struct {
 	AutoAck           bool
 	SessionTimeoutMs  int
 	MaxPollIntervalMs int
-	Kafka             *Kafka
-	NATS              *NATS
-	RabbitMQ          *RabbitMQ
+	DLQ               Producer
+	Kafka             *Kafka // interchangeable
 }
 
 type Kafka struct {
@@ -25,21 +26,6 @@ type Kafka struct {
 	RetryMax          int
 }
 
-type NATS struct {
-	DurableName string
-	AckWaitMs   int
-	Subject     string
-}
-
-type RabbitMQ struct {
-	QueueName     string
-	ConsumerTag   string
-	PrefetchCount int
-	Exchange      string
-	RoutingKey    string
-	Persistent    bool
-}
-
 func consConfig() Consumer {
 	return Consumer{
 		Brokers:           viper.GetStringSlice("kafka.consumer.brokers"),
@@ -49,9 +35,8 @@ func consConfig() Consumer {
 		AutoAck:           viper.GetBool("kafka.consumer.auto_ack"),
 		SessionTimeoutMs:  viper.GetInt("kafka.consumer.session_timeout_ms"),
 		MaxPollIntervalMs: viper.GetInt("kafka.consumer.max_poll_interval_ms"),
+		DLQ:               dlqConfig(),
 		Kafka:             kafkaConfig(),
-		NATS:              nil,
-		RabbitMQ:          nil,
 	}
 }
 
@@ -61,5 +46,26 @@ func kafkaConfig() *Kafka {
 		AutoOffsetReset:   viper.GetString("kafka.consumer.auto_offset_reset"),
 		SessionTimeoutMs:  viper.GetInt("kafka.consumer.session_timeout_ms"),
 		MaxPollIntervalMs: viper.GetInt("kafka.consumer.max_poll_interval_ms"),
+	}
+}
+
+func dlqConfig() Producer {
+	return Producer{
+		Brokers:       viper.GetStringSlice("kafka.dlq.brokers"),
+		Topic:         viper.GetString("kafka.dlq.topic"),
+		ClientID:      viper.GetString("kafka.dlq.client_id"),
+		TotalMessages: viper.GetInt("kafka.dlq.total_messages"),
+		Kafka:         kafkaDlqConfig(),
+	}
+}
+
+func kafkaDlqConfig() *KafkaProducer {
+	return &KafkaProducer{
+		Acks:              viper.GetString("kafka.dlq.acks"),
+		Retries:           viper.GetInt("kafka.dlq.retry_max"),
+		LingerMs:          viper.GetInt("kafka.dlq.linger_ms"),
+		BatchSize:         viper.GetInt("kafka.dlq.batch_size"),
+		CompressionType:   viper.GetString("kafka.dlq.compression_type"),
+		EnableIdempotence: viper.GetBool("kafka.dlq.enable_idempotence"),
 	}
 }

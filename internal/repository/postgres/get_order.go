@@ -8,21 +8,21 @@ import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 )
 
-func (ps *PostgresStorage) GetOrder(orderUID string) (*models.Order, error) {
+func (s *Storage) GetOrder(orderUID string) (*models.Order, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	var orderId int
 	order := new(models.Order)
-	if err := queryAllButItems(ctx, ps, order, orderUID, &orderId); err != nil {
+	if err := queryAllButItems(ctx, s, order, orderUID, &orderId); err != nil {
 		return nil, err
 	}
-	if err := queryItems(ctx, ps, &order.Items, orderId); err != nil {
+	if err := queryItems(ctx, s, &order.Items, orderId); err != nil {
 		return nil, err
 	}
 	return order, nil
 }
 
-func queryAllButItems(ctx context.Context, ps *PostgresStorage, order *models.Order, orderUID string, orderId *int) error {
+func queryAllButItems(ctx context.Context, s *Storage, order *models.Order, orderUID string, orderId *int) error {
 	query := `SELECT 
 
         orders.id, 
@@ -62,7 +62,7 @@ func queryAllButItems(ctx context.Context, ps *PostgresStorage, order *models.Or
         JOIN payments ON orders.id = payments.order_id
         WHERE orders.order_uid = $1`
 
-	row := ps.db.QueryRowContext(ctx, query, orderUID)
+	row := s.db.QueryRowContext(ctx, query, orderUID)
 	var paymentTime time.Time
 	if err := row.Scan(orderId,
 
@@ -103,7 +103,7 @@ func queryAllButItems(ctx context.Context, ps *PostgresStorage, order *models.Or
 	return nil
 }
 
-func queryItems(ctx context.Context, ps *PostgresStorage, items *[]models.Item, orderId int) error {
+func queryItems(ctx context.Context, s *Storage, items *[]models.Item, orderId int) error {
 	query := `SELECT 
         chrt_id,
         track_number,
@@ -118,7 +118,7 @@ func queryItems(ctx context.Context, ps *PostgresStorage, items *[]models.Item, 
         status
         FROM items WHERE order_id = $1`
 
-	rows, err := ps.db.QueryContext(ctx, query, orderId)
+	rows, err := s.db.QueryContext(ctx, query, orderId)
 	if err != nil {
 		return err
 	}
@@ -148,7 +148,7 @@ func queryItems(ctx context.Context, ps *PostgresStorage, items *[]models.Item, 
 	return rows.Err()
 }
 
-func (ps *PostgresStorage) GetOrders(amount ...int) ([]*models.Order, error) {
+func (s *Storage) GetOrders(amount ...int) ([]*models.Order, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -194,7 +194,7 @@ func (ps *PostgresStorage) GetOrders(amount ...int) ([]*models.Order, error) {
 		query += fmt.Sprintf(" LIMIT %d", amount[0])
 	}
 
-	rows, err := ps.db.QueryContext(ctx, query)
+	rows, err := s.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -244,7 +244,7 @@ func (ps *PostgresStorage) GetOrders(amount ...int) ([]*models.Order, error) {
 			return nil, err
 		}
 		order.Payment.PaymentDT = paymentTime.Unix()
-		if err := queryItems(ctx, ps, &order.Items, orderId); err != nil {
+		if err := queryItems(ctx, s, &order.Items, orderId); err != nil {
 			return nil, err
 		}
 		orders = append(orders, order)

@@ -6,9 +6,11 @@ import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger/slog"
 )
 
+//go:generate mockgen -source=logger.go -destination=mocks/mock.go
+
 type Logger interface {
-	LogFatal(msg string, err error)
-	LogError(msg string, err error)
+	LogFatal(msg string, err error, args ...any)
+	LogError(string, error, ...any)
 	LogInfo(msg string, args ...any)
 }
 

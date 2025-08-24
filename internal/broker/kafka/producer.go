@@ -2,10 +2,10 @@ package kafka
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
@@ -15,47 +15,34 @@ const (
 
 type KafkaProducer struct {
 	producer *kafka.Producer
+	logger   logger.Logger
 }
 
-func NewProducer(config configs.Producer) (*KafkaProducer, error) {
-	kafkaProducer, err := kafka.NewProducer(confToMap(config))
+func NewProducer(config configs.Producer, logger logger.Logger) (*KafkaProducer, error) {
+	kafkaProducer, err := kafka.NewProducer(toMap(config))
 	if err != nil {
 		return nil, err
 	}
-	return &KafkaProducer{producer: kafkaProducer}, nil
+	return &KafkaProducer{producer: kafkaProducer, logger: logger}, nil
 }
 
-func confToMap(config configs.Producer) *kafka.ConfigMap {
-	acks := config.Kafka.Acks
-	var acksValue int
-	switch strings.ToLower(acks) {
-	case "all", "-1":
-		acksValue = -1
-	case "0":
-		acksValue = 0
-	case "1":
-		acksValue = 1
-	default:
-		acksValue = -1
+func (p *KafkaProducer) Produce(message configs.Message) error {
+	order := NewKafkaMessage(message.Key, message.Value, message.Topic)
+	eventChan := make(chan kafka.Event)
+	var err error
+	for range 5 {
+		if err = p.producer.Produce(order, eventChan); err != nil {
+			time.Sleep(5 * time.Second)
+			p.logger.LogError("failed to send order", err, "orderUID", string(order.Key), "layer", "broker.kafka")
+			continue
+		} else {
+			if message.DLQ {
+				p.logger.LogInfo("order is sent to DLQ", "orderUID", string(order.Key), "layer", "broker.kafka")
+			}
+			return nil
+		}
 	}
-
-	return &kafka.ConfigMap{
-		"bootstrap.servers":     strings.Join(config.Brokers, ","),
-		"request.required.acks": acksValue,
-		"retries":               config.Kafka.Retries,
-		"linger.ms":             config.Kafka.LingerMs,
-		"batch.size":            config.Kafka.BatchSize,
-		"compression.codec":     config.Kafka.CompressionType,
-		"enable.idempotence":    config.Kafka.EnableIdempotence,
-		"client.id":             config.ClientID,
-	}
-}
-
-func (p *KafkaProducer) Produce(data []byte, topic string) error {
-	kafkaMessage, eventChan := newKafkaMessage(data, topic)
-	if err := p.producer.Produce(kafkaMessage, eventChan); err != nil {
-		return err
-	}
+	p.logger.LogError("failed to send order to DLQ after 5 attempts", err, "orderUID", string(order.Key), "layer", "broker.kafka")
 	select {
 	case event := <-eventChan:
 		switch eventType := event.(type) {
@@ -70,18 +57,16 @@ func (p *KafkaProducer) Produce(data []byte, topic string) error {
 			return fmt.Errorf("unknown type of event: %T", event)
 		}
 	case <-time.After(5 * time.Second):
-		fmt.Println("event time out, make sure that Kafka is running and the address is correct")
-		return nil
+		return fmt.Errorf("event time out, make sure that Kafka is running and the address is correct")
 	}
 }
 
-func newKafkaMessage(data []byte, topic string) (*kafka.Message, chan kafka.Event) {
-	eventChan := make(chan kafka.Event)
+func NewKafkaMessage(key []byte, value []byte, topic string) *kafka.Message {
 	return &kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-		Key:            nil,
-		Value:          data,
-	}, eventChan
+		Key:            key,
+		Value:          value,
+	}
 }
 
 func (p *KafkaProducer) Close() {

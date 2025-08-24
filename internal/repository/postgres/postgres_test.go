@@ -20,7 +20,7 @@ func TestPostgresStorer_Ping(t *testing.T) {
 
 	xdb := sqlx.NewDb(db, "sqlmock")
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-	storer := postgres.NewPostgresStorage(xdb, logger)
+	storer := postgres.NewStorage(xdb, logger)
 
 	mock.ExpectPing()
 	if err := storer.Ping(); err != nil {
@@ -52,7 +52,7 @@ func TestPostgresStorer_Close_Success(t *testing.T) {
 	mock.ExpectClose()
 
 	xdb := sqlx.NewDb(db, "sqlmock")
-	storer := postgres.NewPostgresStorage(xdb, mockLogger)
+	storer := postgres.NewStorage(xdb, mockLogger)
 
 	mockLogger.EXPECT().LogInfo("postgres — stopped").Times(1)
 

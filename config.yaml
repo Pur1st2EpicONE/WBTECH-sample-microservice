@@ -15,7 +15,7 @@ database:
 cache:
   save_in_cache: true
   cache_size: 10
-  background_cleanup: true
+  background_cleanup: false
   cleanup_period: 30s
   order_ttl: 40s
 
@@ -29,7 +29,7 @@ kafka:
     enable_auto_commit: false
     auto_offset_reset: earliest
     session_timeout_ms: 10000
-    max_poll_interval_ms: 300000
+    max_poll_interval_ms: 600000
   producer:
     brokers:
       - localhost:9092
@@ -38,6 +38,17 @@ kafka:
     total_messages: 10
     acks: all
     retry_max: 3 
+    linger_ms: 5
+    batch_size: 65536
+    compression_type: snappy
+    enable_idempotence: true
+  dlq:
+    brokers:
+      - localhost:9092
+    topic: orders-dlq
+    client_id: order-dlq-producer
+    acks: all
+    retry_max: 3
     linger_ms: 5
     batch_size: 65536
     compression_type: snappy

@@ -15,7 +15,7 @@ type MessageHandler interface {
 
 type Handler struct{}
 
-func NewHandler() *Handler {
+func newHandler() *Handler {
 	return new(Handler)
 }
 

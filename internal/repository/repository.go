@@ -21,7 +21,7 @@ type Storage interface {
 }
 
 func NewStorage(db *sqlx.DB, logger logger.Logger) Storage {
-	return postgres.NewPostgresStorage(db, logger)
+	return postgres.NewStorage(db, logger)
 }
 
 func ConnectDB(config configs.Database) (*sqlx.DB, error) {
@@ -32,7 +32,7 @@ func ConnectDB(config configs.Database) (*sqlx.DB, error) {
 	}
 	err = db.Ping()
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %v", err)
+		return nil, fmt.Errorf("database ping failed: %v", err)
 	}
 	return db, nil
 }

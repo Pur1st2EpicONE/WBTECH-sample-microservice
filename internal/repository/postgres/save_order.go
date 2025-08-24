@@ -9,10 +9,10 @@ import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 )
 
-func (ps *PostgresStorage) SaveOrder(order *models.Order) error {
+func (s *Storage) SaveOrder(order *models.Order) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	tx, err := ps.db.BeginTx(ctx, nil)
+	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("postgres-storer — failed to start transaction: %v", err)
 	}

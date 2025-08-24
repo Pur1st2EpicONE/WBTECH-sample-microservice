@@ -41,17 +41,19 @@ func openFile(logDir string) *os.File {
 	return logFile
 }
 
-func (l *Logger) LogFatal(msg string, err error) {
-	slog.Error(msg, slog.String("critical error", err.Error()))
+func (l *Logger) LogFatal(msg string, err error, args ...any) {
+	if err != nil {
+		args = append(args, "err", err.Error())
+	}
+	slog.Error(msg, args...)
 	os.Exit(1)
 }
 
-func (l *Logger) LogError(msg string, err error) {
+func (l *Logger) LogError(msg string, err error, args ...any) {
 	if err != nil {
-		slog.Error(msg, slog.String("error", err.Error()))
-	} else {
-		slog.Error(msg)
+		args = append(args, "err", err.Error())
 	}
+	slog.Error(msg, args...)
 }
 
 func (l *Logger) LogInfo(msg string, args ...any) {
