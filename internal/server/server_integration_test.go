@@ -9,13 +9,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/server"
 )
 
 func TestServer_RunAndShutdown_WithLogger(t *testing.T) {
 	tmpDir := t.TempDir()
-	logger, logFile := logger.NewLogger(tmpDir)
+	config := configs.Logger{LogDir: tmpDir, Debug: false}
+	logger, logFile := logger.NewLogger(config)
 	defer logFile.Close()
 
 	handlerCalled := false
@@ -35,7 +37,7 @@ func TestServer_RunAndShutdown_WithLogger(t *testing.T) {
 		_ = srv.Run(context.Background(), logger)
 	}()
 
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
 	resp, err := http.Get("http://" + srv.HttpServer.Addr)
 	if err != nil {

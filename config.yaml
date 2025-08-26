@@ -1,3 +1,9 @@
+app:
+  log_directory: ./logs
+  logger_debug_mode: true
+  workers: 5
+  worker_restart_delay: 5s
+
 server:
   port: "8081"
   read_timeout: 10s
@@ -29,13 +35,17 @@ kafka:
     enable_auto_commit: false
     auto_offset_reset: earliest
     session_timeout_ms: 10000
-    max_poll_interval_ms: 600000
+    max_poll_interval_ms: 300000
+    save_order_retry_delay: 5s
+    save_order_retry_max: 3
+    commit_retry_delay: 5s
+    commit_retry_max: 3
   producer:
     brokers:
       - localhost:9092
     topic: orders
     client_id: order-producer
-    total_messages: 10
+    messages_to_send: 10
     acks: all
     retry_max: 3 
     linger_ms: 5
@@ -53,5 +63,8 @@ kafka:
     batch_size: 65536
     compression_type: snappy
     enable_idempotence: true
+
+notifier:
+  telegram:
+    chat_id: "805862991"
     
-                 

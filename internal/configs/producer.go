@@ -7,11 +7,11 @@ import (
 )
 
 type Producer struct {
-	Brokers       []string
-	Topic         string
-	ClientID      string
-	TotalMessages int
-	Kafka         *KafkaProducer
+	Brokers    []string
+	Topic      string
+	ClientID   string
+	MsgsToSend int
+	Kafka      *KafkaProducer
 }
 
 type KafkaProducer struct {
@@ -31,6 +31,7 @@ type Message struct {
 	Timestamp time.Time
 	Metadata  map[string]any
 	DLQ       bool
+	WorkerID  int
 }
 
 func ProdConfig() (Producer, error) {
@@ -41,11 +42,11 @@ func ProdConfig() (Producer, error) {
 	}
 
 	return Producer{
-		Brokers:       viper.GetStringSlice("kafka.producer.brokers"),
-		Topic:         viper.GetString("kafka.producer.topic"),
-		ClientID:      viper.GetString("kafka.producer.client_id"),
-		TotalMessages: viper.GetInt("kafka.producer.total_messages"),
-		Kafka:         kafkaProdConfig(),
+		Brokers:    viper.GetStringSlice("kafka.producer.brokers"),
+		Topic:      viper.GetString("kafka.producer.topic"),
+		ClientID:   viper.GetString("kafka.producer.client_id"),
+		MsgsToSend: viper.GetInt("kafka.producer.messages_to_send"),
+		Kafka:      kafkaProdConfig(),
 	}, nil
 }
 

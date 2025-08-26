@@ -5,23 +5,31 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
 )
 
 type Logger struct {
 	logger *slog.Logger
 }
 
-func NewLogger(logDir string) (*Logger, *os.File) {
+func NewLogger(config configs.Logger) (*Logger, *os.File) {
 	var logDest *os.File
-	if logDir == "" {
+	if config.LogDir == "" {
 		logDest = os.Stdout
 	} else {
-		logDest = openFile(logDir)
+		logDest = openFile(config.LogDir)
 		if logDest == nil {
 			logDest = os.Stdout
 		}
 	}
-	handler := slog.NewJSONHandler(logDest, nil)
+	var level slog.Level
+	if config.Debug {
+		level = slog.LevelDebug
+	} else {
+		level = slog.LevelInfo
+	}
+	handler := slog.NewJSONHandler(logDest, &slog.HandlerOptions{Level: level})
 	logger := &Logger{logger: slog.New(handler)}
 	slog.SetDefault(logger.logger)
 	return logger, logDest
@@ -58,4 +66,8 @@ func (l *Logger) LogError(msg string, err error, args ...any) {
 
 func (l *Logger) LogInfo(msg string, args ...any) {
 	slog.Info(msg, args...)
+}
+
+func (l *Logger) Debug(msg string, args ...any) {
+	l.logger.Debug(msg, args...)
 }

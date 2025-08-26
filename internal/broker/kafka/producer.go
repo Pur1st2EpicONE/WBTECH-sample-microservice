@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
@@ -33,16 +34,18 @@ func (p *KafkaProducer) Produce(message configs.Message) error {
 	for range 5 {
 		if err = p.producer.Produce(order, eventChan); err != nil {
 			time.Sleep(5 * time.Second)
-			p.logger.LogError("failed to send order", err, "orderUID", string(order.Key), "layer", "broker.kafka")
+			p.logger.LogError("failed to send order", err, "orderUID", strings.Trim(string(message.Key), `"`), "layer", "broker.kafka")
 			continue
 		} else {
 			if message.DLQ {
-				p.logger.LogInfo("order is sent to DLQ", "orderUID", string(order.Key), "layer", "broker.kafka")
+				p.logger.LogInfo(fmt.Sprintf("worker %d — order is sent to DLQ", message.WorkerID), "orderUID", strings.Trim(string(message.Key), `"`), "workerID", fmt.Sprintf("%d", message.WorkerID), "layer", "broker.kafka")
 			}
 			return nil
 		}
 	}
-	p.logger.LogError("failed to send order to DLQ after 5 attempts", err, "orderUID", string(order.Key), "layer", "broker.kafka")
+	if message.DLQ {
+		p.logger.LogError(fmt.Sprintf("worker %d — failed to send order to DLQ after 5 attempts", message.WorkerID), err, "orderUID", strings.Trim(string(message.Key), `"`), "workerID", fmt.Sprintf("%d", message.WorkerID), "layer", "broker.kafka")
+	}
 	select {
 	case event := <-eventChan:
 		switch eventType := event.(type) {

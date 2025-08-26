@@ -10,10 +10,14 @@ import (
 )
 
 type App struct {
-	Server   Server
-	Database Database
-	Consumer Consumer
-	Cache    Cache
+	Server       Server
+	Database     Database
+	Consumer     Consumer
+	Cache        Cache
+	Logger       Logger
+	Notifier     Notifier
+	Workers      int
+	RestartDelay time.Duration
 }
 
 type Server struct {
@@ -41,6 +45,16 @@ type Cache struct {
 	OrderTTL      time.Duration
 }
 
+type Logger struct {
+	LogDir string
+	Debug  bool
+}
+
+type Notifier struct {
+	Token    string
+	Receiver string
+}
+
 func Load() (App, error) {
 	if err := godotenv.Load(); err != nil {
 		return App{}, fmt.Errorf("godotenv — failed to %v", err) // phrasing is odd here, but gives a clean error message in logs
@@ -54,10 +68,14 @@ func Load() (App, error) {
 	}
 
 	return App{
-		Server:   srvConfig(),
-		Database: dbConfig(),
-		Cache:    cacheConfig(),
-		Consumer: consConfig(),
+		Server:       srvConfig(),
+		Database:     dbConfig(),
+		Cache:        cacheConfig(),
+		Consumer:     consConfig(),
+		Logger:       loggerConfig(),
+		Notifier:     notifierConfig(),
+		Workers:      viper.GetInt("app.workers"),
+		RestartDelay: viper.GetDuration("app.worker_restart_delay"),
 	}, nil
 }
 
@@ -96,5 +114,19 @@ func cacheConfig() Cache {
 		BgCleanup:     viper.GetBool("cache.background_cleanup"),
 		CleanupPeriod: viper.GetDuration("cache.cleanup_period"),
 		OrderTTL:      viper.GetDuration("cache.order_ttl"),
+	}
+}
+
+func loggerConfig() Logger {
+	return Logger{
+		LogDir: viper.GetString("app.log_directory"),
+		Debug:  viper.GetBool("app.logger_debug_mode"),
+	}
+}
+
+func notifierConfig() Notifier {
+	return Notifier{
+		Token:    os.Getenv("TG_BOT_TOKEN"),
+		Receiver: viper.GetString("notifier.telegram.chat_id"),
 	}
 }

@@ -12,7 +12,8 @@ import (
 )
 
 func main() {
-	logger, _ := logger.NewLogger("")
+	loggerConfig := configs.Logger{LogDir: "", Debug: false}
+	logger, _ := logger.NewLogger(loggerConfig)
 
 	config, err := configs.ProdConfig()
 	if err != nil {
@@ -24,8 +25,8 @@ func main() {
 		logger.LogFatal("producer — creation failed", err)
 	}
 
-	checkArgs(&config.TotalMessages, logger)
-	orders := GetOrders(config.TotalMessages, logger)
+	checkArgs(&config.MsgsToSend, logger)
+	orders := GetOrders(config.MsgsToSend, logger)
 
 	for i, order := range orders {
 		orderJSON, err := json.MarshalIndent(order, "", "   ")
@@ -42,7 +43,7 @@ func main() {
 	}
 	logger.LogInfo("order-producer — sending bad order to Kafka")
 	producer.Produce(sendBad())
-	orders = GetOrders(config.TotalMessages, logger)
+	orders = GetOrders(config.MsgsToSend, logger)
 	for i, order := range orders {
 		orderJSON, err := json.MarshalIndent(order, "", "   ")
 		if err != nil {

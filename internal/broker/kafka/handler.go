@@ -10,7 +10,7 @@ import (
 )
 
 type MessageHandler interface {
-	SaveOrder(jsonMsg []byte, storage repository.Storage, logger logger.Logger) error
+	SaveOrder(jsonMsg []byte, storage repository.Storage, logger logger.Logger, consumerID int) error
 }
 
 type Handler struct{}
@@ -19,17 +19,17 @@ func newHandler() *Handler {
 	return new(Handler)
 }
 
-func (h *Handler) SaveOrder(jsonMsg []byte, storage repository.Storage, logger logger.Logger) error {
+func (h *Handler) SaveOrder(jsonMsg []byte, storage repository.Storage, logger logger.Logger, workerID int) error {
 	order := new(models.Order)
 	if err := json.Unmarshal(jsonMsg, order); err != nil {
-		return fmt.Errorf("consumer-handler — failed to unmarshal the order: %v", err)
+		return fmt.Errorf("failed to unmarshal the order: %v", err)
 	}
 	if err := storage.Ping(); err != nil {
-		return fmt.Errorf("consumer-handler — lost connection to database: %v", err)
+		return fmt.Errorf("lost connection to database: %v", err)
 	}
 	if err := storage.SaveOrder(order); err != nil {
-		return fmt.Errorf("consumer-handler — failed to save order %s to database: %v", order.OrderUID, err)
+		return fmt.Errorf("failed to save order %s to database: %v", order.OrderUID, err)
 	}
-	logger.LogInfo("consumer-handler — saved order", "orderUID", order.OrderUID)
+	logger.Debug(fmt.Sprintf("worker %d — saved order to DB", workerID), "orderUID", order.OrderUID, "workerID", fmt.Sprintf("%d", workerID), "layer", "broker.kafka")
 	return nil
 }
