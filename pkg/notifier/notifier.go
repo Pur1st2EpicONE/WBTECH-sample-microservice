@@ -2,7 +2,7 @@ package notifier
 
 import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/notifier/telegram"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/notifier/telegram"
 )
 
 type Notifier interface {

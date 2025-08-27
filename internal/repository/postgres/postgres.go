@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )

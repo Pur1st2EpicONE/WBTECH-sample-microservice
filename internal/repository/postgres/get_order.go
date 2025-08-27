@@ -191,7 +191,7 @@ func (s *Storage) GetOrders(amount ...int) ([]*models.Order, error) {
     JOIN payments ON orders.id = payments.order_id`
 
 	if len(amount) > 0 && amount[0] > 0 {
-		query += fmt.Sprintf(" LIMIT %d", amount[0])
+		query += fmt.Sprintf("\nLIMIT %d", amount[0])
 	}
 
 	rows, err := s.db.QueryContext(ctx, query)

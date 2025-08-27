@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 

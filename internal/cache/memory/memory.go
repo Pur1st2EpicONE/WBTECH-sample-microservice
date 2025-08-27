@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger"
 )
 
 type Cache struct {
@@ -26,10 +26,8 @@ func NewCache(storage repository.Storage, config configs.Cache, logger logger.Lo
 	}
 
 	var queue *Queue
-	var bgCleanup bool
 	cachedOrders := make(map[string]*CachedOrder, config.CacheSize)
 	queue = newQueue(config.CacheSize)
-	bgCleanup = config.BgCleanup
 
 	allOrders, err := storage.GetOrders(config.CacheSize)
 	if err != nil {
@@ -43,7 +41,7 @@ func NewCache(storage repository.Storage, config configs.Cache, logger logger.Lo
 	}
 
 	return &Cache{
-		bgCleanup:     bgCleanup,
+		bgCleanup:     config.BgCleanup,
 		cachedOrders:  cachedOrders,
 		orderTTL:      config.OrderTTL,
 		queue:         queue,
@@ -116,8 +114,8 @@ func (c *Cache) CacheOrder(order *models.Order, logger logger.Logger) {
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if cachedOrder, found := c.cachedOrders[order.OrderUID]; found { // ???
-		cachedOrder.order = order // to keep cache updated if the order changes in the database (it shouldn't but just in case) ????
+	if cachedOrder, found := c.cachedOrders[order.OrderUID]; found {
+		cachedOrder.order = order // to keep cache updated if the order changes in the database (it shouldn't but just in case)
 		cachedOrder.lastAccess = time.Now()
 	} else {
 		rewriteId := c.queue.enqueue(order.OrderUID)

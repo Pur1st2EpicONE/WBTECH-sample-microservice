@@ -10,14 +10,15 @@ import (
 )
 
 type App struct {
-	Server       Server
-	Database     Database
-	Consumer     Consumer
-	Cache        Cache
-	Logger       Logger
-	Notifier     Notifier
-	Workers      int
-	RestartDelay time.Duration
+	Server         Server
+	Database       Database
+	Consumer       Consumer
+	Cache          Cache
+	Logger         Logger
+	Notifier       Notifier
+	Workers        int
+	RestartOnPanic bool
+	RestartDelay   time.Duration
 }
 
 type Server struct {
@@ -28,13 +29,17 @@ type Server struct {
 }
 
 type Database struct {
-	Driver   string
-	Host     string
-	Port     string
-	Username string
-	Password string
-	DBName   string
-	SSLMode  string
+	Driver          string
+	Host            string
+	Port            string
+	Username        string
+	Password        string
+	DBName          string
+	SSLMode         string
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime time.Duration
+	ConnMaxIdleTime time.Duration
 }
 
 type Cache struct {
@@ -68,14 +73,15 @@ func Load() (App, error) {
 	}
 
 	return App{
-		Server:       srvConfig(),
-		Database:     dbConfig(),
-		Cache:        cacheConfig(),
-		Consumer:     consConfig(),
-		Logger:       loggerConfig(),
-		Notifier:     notifierConfig(),
-		Workers:      viper.GetInt("app.workers"),
-		RestartDelay: viper.GetDuration("app.worker_restart_delay"),
+		Server:         srvConfig(),
+		Database:       dbConfig(),
+		Cache:          cacheConfig(),
+		Consumer:       consConfig(),
+		Logger:         loggerConfig(),
+		Notifier:       notifierConfig(),
+		Workers:        viper.GetInt("app.workers.active_consumer_workers"),
+		RestartOnPanic: viper.GetBool("app.workers.restart_on_panic"),
+		RestartDelay:   viper.GetDuration("app.workers.restart_delay"),
 	}, nil
 }
 
@@ -97,13 +103,17 @@ func srvConfig() Server {
 
 func dbConfig() Database {
 	return Database{
-		Driver:   viper.GetString("database.driver"),
-		Host:     viper.GetString("database.host"),
-		Port:     viper.GetString("database.port"),
-		Username: viper.GetString("database.username"),
-		Password: os.Getenv("DB_PASSWORD"),
-		DBName:   viper.GetString("database.dbname"),
-		SSLMode:  viper.GetString("database.sslmode"),
+		Driver:          viper.GetString("database.driver"),
+		Host:            viper.GetString("database.host"),
+		Port:            viper.GetString("database.port"),
+		Username:        viper.GetString("database.username"),
+		Password:        os.Getenv("DB_PASSWORD"),
+		DBName:          viper.GetString("database.dbname"),
+		SSLMode:         viper.GetString("database.sslmode"),
+		MaxOpenConns:    viper.GetInt("database.max_open_conns"),
+		MaxIdleConns:    viper.GetInt("database.max_idle_conns"),
+		ConnMaxLifetime: viper.GetDuration("database.conn_max_lifetime"),
+		ConnMaxIdleTime: viper.GetDuration("database.conn_max_idle_time"),
 	}
 }
 
@@ -119,8 +129,8 @@ func cacheConfig() Cache {
 
 func loggerConfig() Logger {
 	return Logger{
-		LogDir: viper.GetString("app.log_directory"),
-		Debug:  viper.GetBool("app.logger_debug_mode"),
+		LogDir: viper.GetString("app.logger.log_directory"),
+		Debug:  viper.GetBool("app.logger.debug_mode"),
 	}
 }
 

@@ -1,114 +1,126 @@
 package repository_test
 
-// func TestConnectDB_Success_Integration(t *testing.T) {
-// 	if testing.Short() {
-// 		t.Skip("skipping integration test in short mode")
-// 	}
+import (
+	"testing"
 
-// 	ctrl := gomock.NewController(t)
-// 	defer ctrl.Finish()
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/cmd/producer/order"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository/postgres"
+	mock_logger "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger/mocks"
+	"github.com/golang/mock/gomock"
+	"github.com/jmoiron/sqlx"
+)
 
-// 	logger := mock_logger.NewMockLogger(ctrl)
-// 	logger.EXPECT().LogInfo("postgres — stopped")
+func TestConnectDB_Success_Integration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 
-// 	config := configs.Database{
-// 		Driver:   "postgres",
-// 		Host:     "localhost",
-// 		Port:     "5434",
-// 		Username: "Neo",
-// 		Password: "0451",
-// 		DBName:   "wb-service-db-test",
-// 		SSLMode:  "disable",
-// 	}
+	controller := gomock.NewController(t)
+	defer controller.Finish()
 
-// 	db, err := repository.ConnectDB(config)
-// 	if err != nil {
-// 		t.Fatalf("ConnectPostgres failed: %v", err)
-// 	}
-// 	defer db.Close()
+	logger := mock_logger.NewMockLogger(controller)
+	logger.EXPECT().LogInfo("postgres — stopped")
 
-// 	ps := postgres.NewStorage(db, logger)
+	config := configs.Database{
+		Driver:   "postgres",
+		Host:     "localhost",
+		Port:     "5434",
+		Username: "Neo",
+		Password: "0451",
+		DBName:   "wb-service-db-test",
+		SSLMode:  "disable",
+	}
 
-// 	if err := ps.Ping(); err != nil {
-// 		t.Fatalf("Ping failed: %v", err)
-// 	}
+	db, err := repository.ConnectDB(config)
+	if err != nil {
+		t.Fatalf("ConnectPostgres failed: %v", err)
+	}
+	defer db.Close()
 
-// 	ps.Close()
-// }
+	ps := postgres.NewStorage(db, logger)
 
-// func TestPostgresStorer_SaveOrder_Integration(t *testing.T) {
-// 	if testing.Short() {
-// 		t.Skip("skipping integration test in short mode")
-// 	}
-// 	db, err := sqlx.Connect("postgres", "postgres://Neo:0451@localhost:5434/wb-service-db-test?sslmode=disable")
-// 	if err != nil {
-// 		t.Fatalf("failed to connect to db: %v", err)
-// 	}
-// 	defer db.Close()
+	if err := ps.Ping(); err != nil {
+		t.Fatalf("Ping failed: %v", err)
+	}
 
-// 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-// 	ps := repository.NewStorage(db, logger)
+	ps.Close()
+}
 
-// 	order := producer.CreateOrder(logger)
-// 	order.OrderUID = "1"
-// 	order.Payment.Transaction = order.OrderUID
+func TestPostgresStorer_SaveOrder_Integration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+	db, err := sqlx.Connect("postgres", "postgres://Neo:0451@localhost:5434/wb-service-db-test?sslmode=disable")
+	if err != nil {
+		t.Fatalf("failed to connect to db: %v", err)
+	}
+	defer db.Close()
 
-// 	if err := ps.SaveOrder(&order); err != nil {
-// 		t.Fatalf("SaveOrder failed: %v", err)
-// 	}
-// }
+	logger := mock_logger.NewMockLogger(gomock.NewController(t))
+	ps := repository.NewStorage(db, logger)
 
-// func TestPostgresStorer_GetOrder_Integration(t *testing.T) {
-// 	if testing.Short() {
-// 		t.Skip("skipping integration test in short mode")
-// 	}
-// 	db, err := sqlx.Connect("postgres", "postgres://Neo:0451@localhost:5434/wb-service-db-test?sslmode=disable")
-// 	if err != nil {
-// 		t.Fatalf("failed to connect to db: %v", err)
-// 	}
-// 	defer db.Close()
+	order := order.CreateOrder(logger)
+	order.OrderUID = "1"
+	order.Payment.Transaction = order.OrderUID
 
-// 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-// 	ps := repository.NewStorage(db, logger)
+	if err := ps.SaveOrder(&order); err != nil {
+		t.Fatalf("SaveOrder failed: %v", err)
+	}
+}
 
-// 	order, err := ps.GetOrder("1")
-// 	if err != nil {
-// 		t.Fatalf("GetOrder failed: %v", err)
-// 	}
+func TestPostgresStorer_GetOrder_Integration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+	db, err := sqlx.Connect("postgres", "postgres://Neo:0451@localhost:5434/wb-service-db-test?sslmode=disable")
+	if err != nil {
+		t.Fatalf("failed to connect to db: %v", err)
+	}
+	defer db.Close()
 
-// 	if order.OrderUID != "1" {
-// 		t.Fatalf("expected orderUID 1, got %s", order.OrderUID)
-// 	}
-// }
+	logger := mock_logger.NewMockLogger(gomock.NewController(t))
+	ps := repository.NewStorage(db, logger)
 
-// func TestPostgresStorer_SaveAndGetOrder_Integration(t *testing.T) {
-// 	if testing.Short() {
-// 		t.Skip("skipping integration test in short mode")
-// 	}
-// 	db, err := sqlx.Connect("postgres", "postgres://Neo:0451@localhost:5434/wb-service-db-test?sslmode=disable")
-// 	if err != nil {
-// 		t.Fatalf("failed to connect to db: %v", err)
-// 	}
-// 	defer db.Close()
-// 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
-// 	ps := repository.NewStorage(db, logger)
+	order, err := ps.GetOrder("1")
+	if err != nil {
+		t.Fatalf("GetOrder failed: %v", err)
+	}
 
-// 	order := kafka.CreateOrder(logger)
+	if order.OrderUID != "1" {
+		t.Fatalf("expected orderUID 1, got %s", order.OrderUID)
+	}
+}
 
-// 	if err := ps.SaveOrder(&order); err != nil {
-// 		t.Fatalf("SaveOrder failed: %v", err)
-// 	}
+func TestPostgresStorer_SaveAndGetOrder_Integration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+	db, err := sqlx.Connect("postgres", "postgres://Neo:0451@localhost:5434/wb-service-db-test?sslmode=disable")
+	if err != nil {
+		t.Fatalf("failed to connect to db: %v", err)
+	}
+	defer db.Close()
+	logger := mock_logger.NewMockLogger(gomock.NewController(t))
+	ps := repository.NewStorage(db, logger)
 
-// 	gotOrder, err := ps.GetOrder(order.OrderUID)
-// 	if err != nil {
-// 		t.Fatalf("GetOrder failed: %v", err)
-// 	}
+	order := order.CreateOrder(logger)
 
-// 	if gotOrder.OrderUID != order.OrderUID {
-// 		t.Fatalf("expected orderUID %s, got %s", order.OrderUID, gotOrder.OrderUID)
-// 	}
+	if err := ps.SaveOrder(&order); err != nil {
+		t.Fatalf("SaveOrder failed: %v", err)
+	}
 
-// 	if len(gotOrder.Items) != len(order.Items) {
-// 		t.Fatalf("expected %d items, got %d", len(order.Items), len(gotOrder.Items))
-// 	}
-// }
+	gotOrder, err := ps.GetOrder(order.OrderUID)
+	if err != nil {
+		t.Fatalf("GetOrder failed: %v", err)
+	}
+
+	if gotOrder.OrderUID != order.OrderUID {
+		t.Fatalf("expected orderUID %s, got %s", order.OrderUID, gotOrder.OrderUID)
+	}
+
+	if len(gotOrder.Items) != len(order.Items) {
+		t.Fatalf("expected %d items, got %d", len(order.Items), len(gotOrder.Items))
+	}
+}

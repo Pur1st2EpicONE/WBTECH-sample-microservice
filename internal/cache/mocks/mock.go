@@ -8,8 +8,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	logger "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
 	models "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
+	logger "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger"
 	gomock "github.com/golang/mock/gomock"
 )
 

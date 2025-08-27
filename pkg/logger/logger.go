@@ -4,10 +4,8 @@ import (
 	"os"
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger/slog"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger/slog"
 )
-
-//go:generate mockgen -source=logger.go -destination=mocks/mock.go
 
 type Logger interface {
 	LogFatal(msg string, err error, args ...any)

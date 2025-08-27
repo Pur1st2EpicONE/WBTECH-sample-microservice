@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	mock_cache "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/cache/mocks"
-	mock_logger "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger/mocks"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 	mock_repo "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository/mocks"
+	mock_logger "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger/mocks"
 	"github.com/golang/mock/gomock"
 )
 
@@ -19,8 +19,12 @@ func TestNewService(t *testing.T) {
 	mockCacher := mock_cache.NewMockCache(controller)
 
 	service := NewService(mockStorage, mockCacher)
-	if service == nil {
-		t.Fatal("expected service, got nil")
+
+	if service.Storage == nil {
+		t.Fatal("storage is nil")
+	}
+	if service.Cache == nil {
+		t.Fatal("cache is nil")
 	}
 }
 
@@ -41,6 +45,7 @@ func TestService_GetOrder_CacheHit(t *testing.T) {
 
 	mockCacher.EXPECT().GetCachedOrder(orderID).Return(cachedOrder, true)
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
+
 	order, found, err := service.GetOrder(orderID, logger)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

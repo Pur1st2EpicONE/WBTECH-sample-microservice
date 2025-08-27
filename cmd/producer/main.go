@@ -6,9 +6,10 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/cmd/producer/order"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/broker"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger"
 )
 
 func main() {
@@ -26,7 +27,7 @@ func main() {
 	}
 
 	checkArgs(&config.MsgsToSend, logger)
-	orders := GetOrders(config.MsgsToSend, logger)
+	orders := order.GetOrders(config.MsgsToSend, logger)
 
 	for i, order := range orders {
 		orderJSON, err := json.MarshalIndent(order, "", "   ")
@@ -43,7 +44,7 @@ func main() {
 	}
 	logger.LogInfo("order-producer — sending bad order to Kafka")
 	producer.Produce(sendBad())
-	orders = GetOrders(config.MsgsToSend, logger)
+	orders = order.GetOrders(config.MsgsToSend, logger)
 	for i, order := range orders {
 		orderJSON, err := json.MarshalIndent(order, "", "   ")
 		if err != nil {

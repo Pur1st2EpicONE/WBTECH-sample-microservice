@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
 )
@@ -12,6 +11,7 @@ import (
 type Telegram struct {
 	Token  string
 	ChatID string
+	Client *http.Client
 }
 
 func NewNotifier(config configs.Notifier) *Telegram {
@@ -22,9 +22,12 @@ func (t *Telegram) Notify(message string) error {
 	apiURL := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", t.Token)
 	data := url.Values{}
 	data.Set("chat_id", t.ChatID)
-	data.Set("message", fmt.Sprintf(message, time.Now()))
+	data.Set("text", message)
 
-	client := new(http.Client)
+	client := t.Client
+	if client == nil {
+		client = new(http.Client)
+	}
 
 	resp, err := client.PostForm(apiURL, data)
 	if err != nil {

@@ -5,12 +5,10 @@ import (
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/cache/memory"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger"
 )
-
-//go:generate mockgen -source=cache.go -destination=mocks/mock.go
 
 type Cache interface {
 	GetCachedOrder(orderID string) (*models.Order, bool)

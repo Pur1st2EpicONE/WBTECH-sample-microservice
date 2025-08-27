@@ -1,4 +1,4 @@
-package main
+package order
 
 import (
 	"crypto/rand"
@@ -7,8 +7,8 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger"
 )
 
 func GetOrders(amount int, logger logger.Logger) []models.Order {
@@ -365,8 +365,9 @@ func totalItems(logger logger.Logger) int64 {
 	if err != nil {
 		logger.LogFatal("totalItems — failed to create random number", err)
 	}
-	return total.Int64()
+	return total.Int64() + 1 // otherwise item validation might fail
 }
+
 func newChrtId(logger logger.Logger) int {
 	id, err := rand.Int(rand.Reader, big.NewInt(10000000))
 	if err != nil {

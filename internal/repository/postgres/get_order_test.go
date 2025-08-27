@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	mock_logger "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger/mocks"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository/postgres"
+	mock_logger "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/jmoiron/sqlx"
 )
@@ -15,7 +15,7 @@ import (
 func TestPostgresStorer_GetOrder_Success(t *testing.T) {
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
 	if err != nil {
-		t.Fatalf("failed to open sqlmock: %v", err)
+		t.Fatalf("failed to open mock db: %v", err)
 	}
 	defer db.Close()
 
@@ -405,7 +405,7 @@ func TestPostgresStorer_QueryItems_RowsScanError(t *testing.T) {
 func TestPostgresStorer_QueryItems_QueryContextError(t *testing.T) {
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
 	if err != nil {
-		t.Fatalf("failed to open sqlmock: %v", err)
+		t.Fatalf("failed to open mock db: %v", err)
 	}
 	defer db.Close()
 
@@ -538,10 +538,10 @@ func TestPostgresStorer_QueryItems_QueryContextError(t *testing.T) {
 	}
 }
 
-func TestPostgresStorer_GetAllOrders_Success(t *testing.T) {
+func TestPostgresStorer_GetOrders_Success(t *testing.T) {
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
 	if err != nil {
-		t.Fatalf("failed to open sqlmock: %v", err)
+		t.Fatalf("failed to open mock db: %v", err)
 	}
 	defer db.Close()
 
@@ -587,7 +587,8 @@ func TestPostgresStorer_GetAllOrders_Success(t *testing.T) {
 
 		FROM orders 
 		JOIN deliveries ON orders.id = deliveries.order_id
-		JOIN payments ON orders.id = payments.order_id`
+		JOIN payments ON orders.id = payments.order_id
+		LIMIT 1`
 
 	mock.ExpectQuery(orderQuery).WillReturnRows(sqlmock.NewRows([]string{
 
@@ -693,7 +694,7 @@ func TestPostgresStorer_GetAllOrders_Success(t *testing.T) {
 		1,
 	))
 
-	orders, err := ps.GetOrders()
+	orders, err := ps.GetOrders(1)
 	if err != nil {
 		t.Fatalf("expected success, got error: %v", err)
 	}
@@ -708,7 +709,7 @@ func TestPostgresStorer_GetAllOrders_Success(t *testing.T) {
 func TestPostgresStorer_GetAllOrders_QueryContextError(t *testing.T) {
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
 	if err != nil {
-		t.Fatalf("failed to open sqlmock: %v", err)
+		t.Fatalf("failed to open mock db: %v", err)
 	}
 	defer db.Close()
 
@@ -764,7 +765,7 @@ func TestPostgresStorer_GetAllOrders_QueryContextError(t *testing.T) {
 func TestPostgresStorer_GetAllOrders_RowsScanError(t *testing.T) {
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
 	if err != nil {
-		t.Fatalf("failed to open sqlmock: %v", err)
+		t.Fatalf("failed to open mock db: %v", err)
 	}
 	defer db.Close()
 

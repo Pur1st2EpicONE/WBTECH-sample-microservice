@@ -8,6 +8,7 @@ import (
 	reflect "reflect"
 
 	models "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
+	logger "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -35,9 +36,9 @@ func (m *MockServiceProvider) EXPECT() *MockServiceProviderMockRecorder {
 }
 
 // GetOrder mocks base method.
-func (m *MockServiceProvider) GetOrder(orderID string) (*models.Order, bool, error) {
+func (m *MockServiceProvider) GetOrder(orderID string, logger logger.Logger) (*models.Order, bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrder", orderID)
+	ret := m.ctrl.Call(m, "GetOrder", orderID, logger)
 	ret0, _ := ret[0].(*models.Order)
 	ret1, _ := ret[1].(bool)
 	ret2, _ := ret[2].(error)
@@ -45,7 +46,7 @@ func (m *MockServiceProvider) GetOrder(orderID string) (*models.Order, bool, err
 }
 
 // GetOrder indicates an expected call of GetOrder.
-func (mr *MockServiceProviderMockRecorder) GetOrder(orderID interface{}) *gomock.Call {
+func (mr *MockServiceProviderMockRecorder) GetOrder(orderID, logger interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrder", reflect.TypeOf((*MockServiceProvider)(nil).GetOrder), orderID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrder", reflect.TypeOf((*MockServiceProvider)(nil).GetOrder), orderID, logger)
 }

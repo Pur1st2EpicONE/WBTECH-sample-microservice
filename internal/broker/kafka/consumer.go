@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/notifier"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/notifier"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
@@ -90,6 +90,7 @@ func toMap(config any) *kafka.ConfigMap {
 
 func (c *KafkaConsumer) Run(ctx context.Context, storage repository.Storage, logger logger.Logger, workerID int) {
 	logger.LogInfo(fmt.Sprintf("worker %d — receiving orders", workerID), "layer", "broker.kafka")
+	eventTypeErrors := 0
 	for {
 		select {
 		case <-ctx.Done():
@@ -101,6 +102,7 @@ func (c *KafkaConsumer) Run(ctx context.Context, storage repository.Storage, log
 			}
 			switch eventType := event.(type) {
 			case *kafka.Message:
+				eventTypeErrors = 0
 				var lastErr error
 				retryCnt := 0
 				for retryCnt < c.saveOrderRetryMax {
@@ -114,18 +116,24 @@ func (c *KafkaConsumer) Run(ctx context.Context, storage repository.Storage, log
 						break
 					}
 					if err := c.commitWithRetry(eventType); err != nil {
-						logger.LogError(fmt.Sprintf("worker %d — critical error", workerID), err, "orderUID", strings.Trim(string(eventType.Key), `"`), "workerID", fmt.Sprintf("%d", workerID), "layer", "broker.kafka")
-						c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — Kafka commit failed\nworkerID=%d\norderUID=%s", workerID, strings.Trim(string(eventType.Key), `"`)))
-						panic(fmt.Sprintf("worker self-termination: offset commit failed (workerID=%d, orderUID=%s)", workerID, strings.Trim(string(eventType.Key), `"`)))
+						logger.LogError(fmt.Sprintf("worker %d — critical error", workerID), err, "orderUID", toStr(eventType.Key), "workerID", fmt.Sprintf("%d", workerID), "layer", "broker.kafka")
+						c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — Kafka commit failed\nworkerID=%d\norderUID=%s", workerID, toStr(eventType.Key)))
+						panic(fmt.Sprintf("worker self-termination: offset commit failed (workerID=%d, orderUID=%s)", workerID, toStr(eventType.Key)))
 					}
 					break
 				}
 				if retryCnt >= c.saveOrderRetryMax {
-					logger.LogError(fmt.Sprintf("worker %d — failed to process order after %d retries", workerID, c.saveOrderRetryMax), lastErr, "orderUID", strings.Trim(string(eventType.Key), `"`), "workerID", fmt.Sprintf("%d", workerID), "layer", "broker.kafka")
+					logger.LogError(fmt.Sprintf("worker %d — failed to process order after %d retries", workerID, c.saveOrderRetryMax), lastErr, "orderUID", toStr(eventType.Key), "workerID", fmt.Sprintf("%d", workerID), "layer", "broker.kafka")
 					c.sendToDLQ(eventType, retryCnt, workerID)
 				}
 			case kafka.Error:
+				eventTypeErrors++
 				logger.LogError("consumer — event type error", eventType, "layer", "broker.kafka")
+				if eventTypeErrors > 3 {
+					c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — Kafka broker might be unreachable\nworkerID=%d", workerID))
+					panic(fmt.Sprintf("worker self-termination: kafka is down (workerID=%d)", workerID))
+				}
+				time.Sleep(c.commitRetryDelay)
 			}
 		}
 	}
@@ -144,10 +152,7 @@ func (c *KafkaConsumer) commitWithRetry(msg *kafka.Message) error {
 }
 
 func (c *KafkaConsumer) sendToDLQ(eventType *kafka.Message, retryCnt int, workerID int) {
-	headers := make(map[string]string, len(eventType.Headers))
-	for _, h := range eventType.Headers {
-		headers[h.Key] = string(h.Value)
-	}
+	headers := make(map[string]string)
 	msg := configs.Message{
 		Topic:     c.dlqTopic,
 		Key:       eventType.Key,

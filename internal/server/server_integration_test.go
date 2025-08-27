@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/server"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger"
 )
 
 func TestServer_RunAndShutdown_WithLogger(t *testing.T) {
@@ -28,7 +28,7 @@ func TestServer_RunAndShutdown_WithLogger(t *testing.T) {
 
 	srv := &server.Server{
 		HttpServer: &http.Server{
-			Addr:    "localhost:8085",
+			Addr:    "localhost:8086",
 			Handler: fakeHandler,
 		},
 	}

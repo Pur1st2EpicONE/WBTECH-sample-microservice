@@ -12,6 +12,7 @@ func main() {
 	go wbService.RunCacheCleaner()
 	go wbService.RunServer()
 	go wbService.RunConsumer()
+
 	wbService.Wait()
 
 }

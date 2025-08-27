@@ -1,8 +1,11 @@
 app:
-  log_directory: ./logs
-  logger_debug_mode: true
-  workers: 5
-  worker_restart_delay: 5s
+  logger:
+    log_directory: ./logs
+    debug_mode: true
+  workers: 
+    active_consumer_workers: 3
+    restart_on_panic: true
+    restart_delay: 1s
 
 server:
   port: "8081"
@@ -17,11 +20,15 @@ database:
   username: Neo
   dbname: wb-service-db
   sslmode: disable
+  max_open_conns: 57
+  max_idle_conns: 25
+  conn_max_lifetime: 1h
+  conn_max_idle_time: 5m
 
 cache:
   save_in_cache: true
   cache_size: 10
-  background_cleanup: false
+  background_cleanup: true
   cleanup_period: 30s
   order_ttl: 40s
 
@@ -40,6 +47,8 @@ kafka:
     save_order_retry_max: 3
     commit_retry_delay: 5s
     commit_retry_max: 3
+    event_type_errors_max: 3
+    event_type_error_retry_delay: 10s
   producer:
     brokers:
       - localhost:9092

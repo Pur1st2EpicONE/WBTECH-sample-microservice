@@ -3,7 +3,7 @@ package broker
 import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/broker/kafka"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger"
 )
 
 type Producer interface {

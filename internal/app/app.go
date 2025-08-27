@@ -16,29 +16,29 @@ import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/cache"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/handler"
-	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/logger"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/server"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/service"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger"
 	"github.com/jmoiron/sqlx"
 )
 
 type App struct { // orchestration layer
-	logger       logger.Logger
-	logFile      *os.File
-	server       *server.Server
-	consumer     broker.Consumer
-	workers      int
-	restartDelay time.Duration
-	cache        cache.Cache
-	storage      repository.Storage
-	ctx          context.Context
-	Stop         context.CancelFunc
-	wg           *sync.WaitGroup
+	logger         logger.Logger
+	logFile        *os.File
+	server         *server.Server
+	consumer       broker.Consumer
+	workers        int
+	restartOnPanic bool
+	restartDelay   time.Duration
+	cache          cache.Cache
+	storage        repository.Storage
+	ctx            context.Context
+	Stop           context.CancelFunc
+	wg             *sync.WaitGroup
 }
 
 func Start() *App {
-	var wg sync.WaitGroup
 
 	config, err := configs.Load()
 	if err != nil {
@@ -61,19 +61,21 @@ func Start() *App {
 	}
 
 	server, cache, storage := wireApp(db, config, logger)
+	wg := new(sync.WaitGroup)
 
 	return &App{
-		logger:       logger,
-		logFile:      logFile,
-		server:       server,
-		consumer:     consumer,
-		workers:      config.Workers,
-		restartDelay: config.RestartDelay,
-		cache:        cache,
-		storage:      storage,
-		ctx:          ctx,
-		Stop:         stop,
-		wg:           &wg}
+		logger:         logger,
+		logFile:        logFile,
+		server:         server,
+		consumer:       consumer,
+		workers:        config.Workers,
+		restartOnPanic: config.RestartOnPanic,
+		restartDelay:   config.RestartDelay,
+		cache:          cache,
+		storage:        storage,
+		ctx:            ctx,
+		Stop:           stop,
+		wg:             wg}
 }
 
 func wireApp(db *sqlx.DB, config configs.App, logger logger.Logger) (*server.Server, cache.Cache, repository.Storage) {
@@ -117,31 +119,50 @@ func (a *App) RunServer() {
 }
 
 func (a *App) RunConsumer() {
+	a.wg.Add(1)
 	go func() {
+		defer a.wg.Done()
 		<-a.ctx.Done()
 		a.consumer.Close(a.logger)
 	}()
-	for i := 1; i < a.workers+1; i++ {
+	for workerID := 1; workerID < a.workers+1; workerID++ {
 		a.wg.Add(1)
-		go a.runWorker(i)
+		go a.runWorker(workerID)
 	}
 }
 
 func (a *App) runWorker(workerID int) {
 	defer a.wg.Done()
+	mu := new(sync.Mutex)
 	for {
-		func() {
-			defer func() {
-				if panicErr := recover(); panicErr != nil {
-					a.logger.LogError(fmt.Sprintf("worker %d panicked, restarting", workerID), fmt.Errorf("%v", panicErr))
-				}
-			}()
-			a.consumer.Run(a.ctx, a.storage, a.logger, workerID)
-		}()
-		if a.ctx.Err() != nil {
+		select {
+		case <-a.ctx.Done():
+			a.logger.LogInfo(fmt.Sprintf("worker %d shutting down", workerID))
 			return
+		default:
+			func() {
+				defer func() {
+					if panicErr := recover(); panicErr != nil {
+						a.logger.LogError(fmt.Sprintf("worker %d panicked", workerID), fmt.Errorf("%v", panicErr))
+						if !a.restartOnPanic {
+							a.logger.LogInfo(fmt.Sprintf("worker %d terminated", workerID))
+							mu.Lock()
+							a.workers--
+							if a.workers == 0 {
+								a.logger.LogInfo("consumer — all workers have panicked, initiating emergency shutdown")
+								a.Stop()
+							}
+							mu.Unlock()
+						}
+					}
+				}()
+				a.consumer.Run(a.ctx, a.storage, a.logger, workerID)
+			}()
+			if !a.restartOnPanic {
+				return
+			}
+			time.Sleep(a.restartDelay)
 		}
-		time.Sleep(a.restartDelay)
 	}
 }
 

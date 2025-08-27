@@ -7,20 +7,22 @@ import (
 )
 
 type Consumer struct {
-	Brokers             []string
-	Topic               string
-	ClientID            string
-	GroupID             string
-	AutoAck             bool
-	SessionTimeoutMs    int
-	MaxPollIntervalMs   int
-	SaveOrderRetryDelay time.Duration
-	SaveOrderRetryMax   int
-	CommitRetryDelay    time.Duration
-	CommitRetryMax      int
-	DLQ                 Producer
-	Notifier            Notifier
-	Kafka               *Kafka // interchangeable
+	Brokers                  []string
+	Topic                    string
+	ClientID                 string
+	GroupID                  string
+	AutoAck                  bool
+	SessionTimeoutMs         int
+	MaxPollIntervalMs        int
+	SaveOrderRetryDelay      time.Duration
+	SaveOrderRetryMax        int
+	CommitRetryDelay         time.Duration
+	CommitRetryMax           int
+	EventTypeErrorsMax       int
+	EventTypeErrorRetryDelay time.Duration
+	DLQ                      Producer
+	Notifier                 Notifier
+	Kafka                    *Kafka // interchangeable
 }
 
 type Kafka struct {
@@ -39,20 +41,22 @@ type Kafka struct {
 
 func consConfig() Consumer {
 	return Consumer{
-		Brokers:             viper.GetStringSlice("kafka.consumer.brokers"),
-		Topic:               viper.GetString("kafka.consumer.topic"),
-		ClientID:            viper.GetString("kafka.consumer.client_id"),
-		GroupID:             viper.GetString("kafka.consumer.group_id"),
-		AutoAck:             viper.GetBool("kafka.consumer.auto_ack"),
-		SessionTimeoutMs:    viper.GetInt("kafka.consumer.session_timeout_ms"),
-		MaxPollIntervalMs:   viper.GetInt("kafka.consumer.max_poll_interval_ms"),
-		SaveOrderRetryDelay: viper.GetDuration("kafka.consumer.save_order_retry_delay"),
-		SaveOrderRetryMax:   viper.GetInt("kafka.consumer.save_order_retry_max"),
-		CommitRetryDelay:    viper.GetDuration("kafka.consumer.commit_retry_delay"),
-		CommitRetryMax:      viper.GetInt("kafka.consumer.commit_retry_max"),
-		DLQ:                 dlqConfig(),
-		Notifier:            notifierConfig(),
-		Kafka:               kafkaConfig(),
+		Brokers:                  viper.GetStringSlice("kafka.consumer.brokers"),
+		Topic:                    viper.GetString("kafka.consumer.topic"),
+		ClientID:                 viper.GetString("kafka.consumer.client_id"),
+		GroupID:                  viper.GetString("kafka.consumer.group_id"),
+		AutoAck:                  viper.GetBool("kafka.consumer.auto_ack"),
+		SessionTimeoutMs:         viper.GetInt("kafka.consumer.session_timeout_ms"),
+		MaxPollIntervalMs:        viper.GetInt("kafka.consumer.max_poll_interval_ms"),
+		SaveOrderRetryDelay:      viper.GetDuration("kafka.consumer.save_order_retry_delay"),
+		SaveOrderRetryMax:        viper.GetInt("kafka.consumer.save_order_retry_max"),
+		CommitRetryDelay:         viper.GetDuration("kafka.consumer.commit_retry_delay"),
+		CommitRetryMax:           viper.GetInt("kafka.consumer.commit_retry_max"),
+		EventTypeErrorsMax:       viper.GetInt("kafka.consumer.event_type_errors_max"),
+		EventTypeErrorRetryDelay: viper.GetDuration("kafka.consumer.event_type_error_retry_delay"),
+		DLQ:                      dlqConfig(),
+		Notifier:                 notifierConfig(),
+		Kafka:                    kafkaConfig(),
 	}
 }
 
