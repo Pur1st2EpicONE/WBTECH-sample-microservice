@@ -1,4 +1,4 @@
-.PHONY: all up create-topic run-service test test-unit test-integration coverage coverage-html migrate-test
+.PHONY: all create-topic run-service test test-unit test-integration coverage coverage-html migrate-test
 
 all: services db-load migrate-up create-topic run-service
 

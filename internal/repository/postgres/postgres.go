@@ -21,8 +21,8 @@ func (s *Storage) Ping() error {
 
 func (s *Storage) Close() {
 	if err := s.db.Close(); err != nil {
-		s.logger.LogError("postgres — failed to close properly", err)
+		s.logger.LogError("postgres — failed to close properly", err, "layer", "repository.postgres")
 	} else {
-		s.logger.LogInfo("postgres — stopped")
+		s.logger.LogInfo("postgres — stopped", "layer", "repository.postgres")
 	}
 }

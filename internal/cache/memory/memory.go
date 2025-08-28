@@ -3,6 +3,7 @@ package memory
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
@@ -18,11 +19,13 @@ type Cache struct {
 	orderTTL      time.Duration
 	queue         *Queue
 	cleanupPeriod time.Duration
+	pauseCleaner  bool
+	pauseDuration time.Duration
 }
 
 func NewCache(storage repository.Storage, config configs.Cache, logger logger.Logger) *Cache {
 	if !config.SaveInCache || config.CacheSize < 1 {
-		return new(Cache) // this is clunky but it's too late for that
+		return new(Cache)
 	}
 
 	var queue *Queue
@@ -31,13 +34,13 @@ func NewCache(storage repository.Storage, config configs.Cache, logger logger.Lo
 
 	allOrders, err := storage.GetOrders(config.CacheSize)
 	if err != nil {
-		logger.LogError("failed to load orders from database -> %v", err, "layer", "cache.memory")
+		logger.LogError("cache — failed to load orders from database: %v", err, "layer", "cache.memory")
 	} else {
 		for _, order := range allOrders {
 			cachedOrders[order.OrderUID] = newCachedOrder(order)
 			queue.enqueue(order.OrderUID)
 		}
-		logger.LogInfo("load from database completed", "layer", "cache.memory")
+		logger.LogInfo("cache — load from database completed", "layer", "cache.memory")
 	}
 
 	return &Cache{
@@ -46,16 +49,19 @@ func NewCache(storage repository.Storage, config configs.Cache, logger logger.Lo
 		orderTTL:      config.OrderTTL,
 		queue:         queue,
 		cleanupPeriod: config.CleanupPeriod,
+		pauseDuration: config.PauseDuration,
 	}
 }
 
 type CachedOrder struct {
 	order      *models.Order
-	lastAccess time.Time
+	lastAccess atomic.Int64
 }
 
 func newCachedOrder(order *models.Order) *CachedOrder {
-	return &CachedOrder{order: order, lastAccess: time.Now()}
+	cachedOrder := &CachedOrder{order: order}
+	cachedOrder.lastAccess.Store(time.Now().UnixNano())
+	return cachedOrder
 }
 
 type Queue struct {
@@ -102,9 +108,7 @@ func (c *Cache) GetCachedOrder(orderID string) (*models.Order, bool) {
 	if !found {
 		return nil, false
 	}
-	c.mu.Lock()
-	cachedOrder.lastAccess = time.Now()
-	c.mu.Unlock()
+	cachedOrder.lastAccess.Store(time.Now().UnixNano())
 	return cachedOrder.order, true
 }
 
@@ -113,38 +117,57 @@ func (c *Cache) CacheOrder(order *models.Order, logger logger.Logger) {
 		return
 	}
 	c.mu.Lock()
-	defer c.mu.Unlock()
 	if cachedOrder, found := c.cachedOrders[order.OrderUID]; found {
-		cachedOrder.order = order // to keep cache updated if the order changes in the database (it shouldn't but just in case)
-		cachedOrder.lastAccess = time.Now()
+		cachedOrder.lastAccess.Store(time.Now().UnixNano())
 	} else {
 		rewriteId := c.queue.enqueue(order.OrderUID)
 		if rewriteId != order.OrderUID {
 			delete(c.cachedOrders, rewriteId)
 		}
 		c.cachedOrders[order.OrderUID] = newCachedOrder(order)
-		logger.LogInfo("order saved", "orderUID", order.OrderUID, "layer", "cache.memory")
+		logger.LogInfo("cache — order saved", "orderUID", order.OrderUID, "layer", "cache.memory")
 	}
+	c.mu.Unlock()
 }
 
-func (c *Cache) CacheCleaner(ctx context.Context, logger logger.Logger) {
+func (c *Cache) CacheCleaner(ctx context.Context, logger logger.Logger, dbStatus chan bool) {
 	if !c.bgCleanup {
 		return
 	}
-	logger.LogInfo("cleaner started", "layer", "cache.memory")
 	ticker := time.NewTicker(c.cleanupPeriod)
 	defer ticker.Stop()
+	logger.LogInfo("cache — cleaner started", "layer", "cache.memory")
 	for {
+		if c.pauseCleaner {
+			time.Sleep(c.pauseDuration)
+		}
 		select {
 		case <-ctx.Done():
-			logger.LogInfo("cleaner stopped", "layer", "cache.memory")
+			logger.LogInfo("cache — cleaner stopped", "layer", "cache.memory")
 			return
+		case connected := <-dbStatus:
+			if connected {
+				if c.pauseCleaner {
+					logger.LogInfo("cache — connection to database restored, cleaner resumed", "layer", "cache.memory")
+				}
+				c.pauseCleaner = false
+			} else {
+				if !c.pauseCleaner {
+					logger.LogInfo("cache — lost connection to database, cleaner paused", "layer", "cache.memory")
+				}
+				c.pauseCleaner = true
+				continue
+			}
 		case <-ticker.C:
-			logger.LogInfo("cleanup cycle started", "layer", "cache.memory")
+			if c.pauseCleaner {
+				continue
+			}
+			logger.Debug("cache — cleanup cycle started", "layer", "cache.memory")
 			var expiredOrders []string
 			c.mu.RLock()
 			for orderUID, order := range c.cachedOrders {
-				if time.Since(order.lastAccess) > c.orderTTL {
+				lastAccess := time.Unix(0, order.lastAccess.Load())
+				if time.Since(lastAccess) > c.orderTTL {
 					expiredOrders = append(expiredOrders, orderUID)
 				}
 			}
@@ -153,11 +176,11 @@ func (c *Cache) CacheCleaner(ctx context.Context, logger logger.Logger) {
 				c.mu.Lock()
 				for _, orderUID := range expiredOrders {
 					delete(c.cachedOrders, orderUID)
-					logger.LogInfo("order deleted", "orderUID", orderUID, "layer", "cache.memory")
+					logger.Debug("cache — order deleted", "orderUID", orderUID, "layer", "cache.memory")
 				}
 				c.mu.Unlock()
 			}
-			logger.LogInfo("cleanup cycle completed", "layer", "cache.memory")
+			logger.Debug("cache — cleanup cycle completed", "layer", "cache.memory")
 		}
 	}
 }

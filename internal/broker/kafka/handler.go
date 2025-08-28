@@ -24,16 +24,13 @@ func (h *Handler) SaveOrder(jsonMsg []byte, storage repository.Storage, logger l
 	validate := validator.New()
 	order := new(models.Order)
 	if err := json.Unmarshal(jsonMsg, order); err != nil {
-		return fmt.Errorf("failed to unmarshal the order: %v", err)
+		return fmt.Errorf("failed to unmarshal the order: %w", err)
 	}
 	if err := validate.Struct(order); err != nil {
-		return fmt.Errorf("validation failed: %v", err)
-	}
-	if err := storage.Ping(); err != nil {
-		return fmt.Errorf("lost connection to database: %v", err)
+		return fmt.Errorf("validation failed: %w", err)
 	}
 	if err := storage.SaveOrder(order); err != nil {
-		return fmt.Errorf("failed to save order %s to database: %v", order.OrderUID, err)
+		return fmt.Errorf("failed to save order %s to database: %w", order.OrderUID, err)
 	}
 	logger.Debug(fmt.Sprintf("worker %d — saved order to DB", workerID), "orderUID", order.OrderUID, "workerID", fmt.Sprintf("%d", workerID), "layer", "broker.kafka")
 	return nil

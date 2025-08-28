@@ -10,22 +10,25 @@ import (
 )
 
 type App struct {
-	Server         Server
-	Database       Database
-	Consumer       Consumer
-	Cache          Cache
-	Logger         Logger
-	Notifier       Notifier
-	Workers        int
-	RestartOnPanic bool
-	RestartDelay   time.Duration
+	Server          Server
+	Database        Database
+	Consumer        Consumer
+	Cache           Cache
+	Logger          Logger
+	Notifier        Notifier
+	Workers         int
+	RestartOnPanic  bool
+	RestartDelay    time.Duration
+	DbCheckInterval time.Duration
+	DbMaxChecks     int
 }
 
 type Server struct {
-	Port           string
-	ReadTimeout    time.Duration
-	WriteTimeout   time.Duration
-	MaxHeaderBytes int
+	Port            string
+	ReadTimeout     time.Duration
+	WriteTimeout    time.Duration
+	MaxHeaderBytes  int
+	ShutdownTimeout time.Duration
 }
 
 type Database struct {
@@ -48,6 +51,7 @@ type Cache struct {
 	BgCleanup     bool
 	CleanupPeriod time.Duration
 	OrderTTL      time.Duration
+	PauseDuration time.Duration
 }
 
 type Logger struct {
@@ -73,15 +77,17 @@ func Load() (App, error) {
 	}
 
 	return App{
-		Server:         srvConfig(),
-		Database:       dbConfig(),
-		Cache:          cacheConfig(),
-		Consumer:       consConfig(),
-		Logger:         loggerConfig(),
-		Notifier:       notifierConfig(),
-		Workers:        viper.GetInt("app.workers.active_consumer_workers"),
-		RestartOnPanic: viper.GetBool("app.workers.restart_on_panic"),
-		RestartDelay:   viper.GetDuration("app.workers.restart_delay"),
+		Server:          srvConfig(),
+		Database:        dbConfig(),
+		Cache:           cacheConfig(),
+		Consumer:        consConfig(),
+		Logger:          loggerConfig(),
+		Notifier:        notifierConfig(),
+		Workers:         viper.GetInt("app.workers.active_consumer_workers"),
+		RestartOnPanic:  viper.GetBool("app.workers.restart_on_panic"),
+		RestartDelay:    viper.GetDuration("app.workers.restart_delay"),
+		DbCheckInterval: viper.GetDuration("app.db.connection_check_interval"),
+		DbMaxChecks:     viper.GetInt("app.db.max_rtrs_bfr_cache_only_mode"),
 	}, nil
 }
 
@@ -94,10 +100,11 @@ interchangeable sub-structures without tying them to App directly.
 
 func srvConfig() Server {
 	return Server{
-		Port:           viper.GetString("server.port"),
-		ReadTimeout:    viper.GetDuration("server.read_timeout"),
-		WriteTimeout:   viper.GetDuration("server.write_timeout"),
-		MaxHeaderBytes: viper.GetInt("server.max_header_bytes"),
+		Port:            viper.GetString("server.port"),
+		ReadTimeout:     viper.GetDuration("server.read_timeout"),
+		WriteTimeout:    viper.GetDuration("server.write_timeout"),
+		MaxHeaderBytes:  viper.GetInt("server.max_header_bytes"),
+		ShutdownTimeout: viper.GetDuration("server.shutdown_timeout"),
 	}
 }
 
@@ -124,6 +131,7 @@ func cacheConfig() Cache {
 		BgCleanup:     viper.GetBool("cache.background_cleanup"),
 		CleanupPeriod: viper.GetDuration("cache.cleanup_period"),
 		OrderTTL:      viper.GetDuration("cache.order_ttl"),
+		PauseDuration: viper.GetDuration("cache.clnr_pause_on_db_conn_check"),
 	}
 }
 

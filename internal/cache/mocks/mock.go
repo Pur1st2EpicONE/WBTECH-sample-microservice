@@ -37,15 +37,15 @@ func (m *MockCache) EXPECT() *MockCacheMockRecorder {
 }
 
 // CacheCleaner mocks base method.
-func (m *MockCache) CacheCleaner(ctx context.Context, logger logger.Logger) {
+func (m *MockCache) CacheCleaner(ctx context.Context, logger logger.Logger, dbStatus chan bool) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "CacheCleaner", ctx, logger)
+	m.ctrl.Call(m, "CacheCleaner", ctx, logger, dbStatus)
 }
 
 // CacheCleaner indicates an expected call of CacheCleaner.
-func (mr *MockCacheMockRecorder) CacheCleaner(ctx, logger interface{}) *gomock.Call {
+func (mr *MockCacheMockRecorder) CacheCleaner(ctx, logger, dbStatus interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CacheCleaner", reflect.TypeOf((*MockCache)(nil).CacheCleaner), ctx, logger)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CacheCleaner", reflect.TypeOf((*MockCache)(nil).CacheCleaner), ctx, logger, dbStatus)
 }
 
 // CacheOrder mocks base method.

@@ -10,6 +10,7 @@ import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 	mock_service "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/service/mocks"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger"
+	mock_logger "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger/mocks"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -91,4 +92,24 @@ func TestGetOrder_Error(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+func TestGetOrder_NotFound(t *testing.T) {
+	h, mockService, router := setupHandlerWithMock(t)
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+
+	mockLogger := mock_logger.NewMockLogger(controller)
+	h.logger = mockLogger
+
+	orderID := "a1b2o3b4a5"
+	mockService.EXPECT().GetOrder(orderID, gomock.Any()).Return(nil, false, errors.New("sql: no rows in result set"))
+	mockLogger.EXPECT().Debug("handler — failed to get order", "orderUID", orderID, "layer", "handler")
+
+	req := httptest.NewRequest(http.MethodGet, "/orders/"+orderID, nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+	assert.Contains(t, w.Body.String(), "order not found")
 }

@@ -10,7 +10,7 @@ import (
 )
 
 type Consumer interface {
-	Run(ctx context.Context, storage repository.Storage, logger logger.Logger, consumerID int)
+	Run(ctx context.Context, storage repository.Storage, logger logger.Logger, workerID int)
 	Close(logger logger.Logger)
 }
 

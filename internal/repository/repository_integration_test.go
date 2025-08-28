@@ -21,7 +21,7 @@ func TestConnectDB_Success_Integration(t *testing.T) {
 	defer controller.Finish()
 
 	logger := mock_logger.NewMockLogger(controller)
-	logger.EXPECT().LogInfo("postgres — stopped")
+	logger.EXPECT().LogInfo("postgres — stopped", "layer", "repository.postgres")
 
 	config := configs.Database{
 		Driver:   "postgres",

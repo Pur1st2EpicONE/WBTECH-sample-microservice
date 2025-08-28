@@ -14,40 +14,44 @@ import (
 )
 
 type KafkaConsumer struct {
-	consumer            *kafka.Consumer
-	handler             *Handler
-	dlq                 *KafkaProducer
-	dlqTopic            string
-	saveOrderRetryDelay time.Duration
-	saveOrderRetryMax   int
-	commitRetryDelay    time.Duration
-	commitRetryMax      int
-	notifier            notifier.Notifier
+	consumer                 *kafka.Consumer
+	handler                  *Handler
+	dlq                      *KafkaProducer
+	dlqTopic                 string
+	saveOrderRetryDelay      time.Duration
+	saveOrderRetryMax        int
+	commitRetryDelay         time.Duration
+	commitRetryMax           int
+	eventTypeErrorsMax       int
+	eventTypeErrorRetryDelay time.Duration
+	notifier                 notifier.Notifier
 }
 
 func NewConsumer(config configs.Consumer, logger logger.Logger) (*KafkaConsumer, error) {
 	kafkaConsumer, err := kafka.NewConsumer(toMap(config))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create consumer -> %w", err)
+		return nil, fmt.Errorf("failed to create consumer: %w", err)
 	}
 	if err := kafkaConsumer.Subscribe(config.Topic, nil); err != nil {
-		return nil, fmt.Errorf("failed to subscribe to topic -> %w", err)
+		return nil, fmt.Errorf("failed to subscribe to topic: %w", err)
 	}
 	dlq, err := NewProducer(config.DLQ, logger)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create DLQ -> %w", err)
+		return nil, fmt.Errorf("failed to create DLQ: %w", err)
 	}
 	handler := newHandler()
 	return &KafkaConsumer{
-		consumer:            kafkaConsumer,
-		handler:             handler,
-		dlq:                 dlq,
-		dlqTopic:            config.DLQ.Topic,
-		saveOrderRetryDelay: config.SaveOrderRetryDelay,
-		saveOrderRetryMax:   config.SaveOrderRetryMax,
-		commitRetryDelay:    config.CommitRetryDelay,
-		commitRetryMax:      config.CommitRetryMax,
-		notifier:            notifier.NewNotifier(config.Notifier)}, nil
+		consumer:                 kafkaConsumer,
+		handler:                  handler,
+		dlq:                      dlq,
+		dlqTopic:                 config.DLQ.Topic,
+		saveOrderRetryDelay:      config.SaveOrderRetryDelay,
+		saveOrderRetryMax:        config.SaveOrderRetryMax,
+		commitRetryDelay:         config.CommitRetryDelay,
+		commitRetryMax:           config.CommitRetryMax,
+		eventTypeErrorsMax:       config.EventTypeErrorsMax,
+		eventTypeErrorRetryDelay: config.EventTypeErrorRetryDelay,
+		notifier:                 notifier.NewNotifier(config.Notifier)}, nil
 }
 
 func toMap(config any) *kafka.ConfigMap {
@@ -116,24 +120,24 @@ func (c *KafkaConsumer) Run(ctx context.Context, storage repository.Storage, log
 						break
 					}
 					if err := c.commitWithRetry(eventType); err != nil {
-						logger.LogError(fmt.Sprintf("worker %d — critical error", workerID), err, "orderUID", toStr(eventType.Key), "workerID", fmt.Sprintf("%d", workerID), "layer", "broker.kafka")
-						c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — Kafka commit failed\nworkerID=%d\norderUID=%s", workerID, toStr(eventType.Key)))
-						panic(fmt.Sprintf("worker self-termination: offset commit failed (workerID=%d, orderUID=%s)", workerID, toStr(eventType.Key)))
+						logger.LogError(fmt.Sprintf("worker %d — critical error", workerID), err, "orderUID", ToStr(eventType.Key), "workerID", fmt.Sprintf("%d", workerID), "layer", "broker.kafka")
+						c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — Kafka commit failed\nworkerID=%d\norderUID=%s", workerID, ToStr(eventType.Key)))
+						panic(fmt.Sprintf("worker self-termination: offset commit failed (workerID=%d, orderUID=%s)", workerID, ToStr(eventType.Key)))
 					}
 					break
 				}
 				if retryCnt >= c.saveOrderRetryMax {
-					logger.LogError(fmt.Sprintf("worker %d — failed to process order after %d retries", workerID, c.saveOrderRetryMax), lastErr, "orderUID", toStr(eventType.Key), "workerID", fmt.Sprintf("%d", workerID), "layer", "broker.kafka")
+					logger.LogError(fmt.Sprintf("worker %d — failed to process order after %d retries", workerID, c.saveOrderRetryMax), lastErr, "orderUID", ToStr(eventType.Key), "workerID", fmt.Sprintf("%d", workerID), "layer", "broker.kafka")
 					c.sendToDLQ(eventType, retryCnt, workerID)
 				}
 			case kafka.Error:
 				eventTypeErrors++
 				logger.LogError("consumer — event type error", eventType, "layer", "broker.kafka")
-				if eventTypeErrors > 3 {
-					c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — Kafka broker might be unreachable\nworkerID=%d", workerID))
+				if eventTypeErrors > c.eventTypeErrorsMax {
+					c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — Kafka broker is unreachable\nworkerID=%d", workerID))
 					panic(fmt.Sprintf("worker self-termination: kafka is down (workerID=%d)", workerID))
 				}
-				time.Sleep(c.commitRetryDelay)
+				time.Sleep(c.eventTypeErrorRetryDelay)
 			}
 		}
 	}
@@ -164,16 +168,16 @@ func (c *KafkaConsumer) sendToDLQ(eventType *kafka.Message, retryCnt int, worker
 		WorkerID:  workerID,
 	}
 	if err := c.dlq.Produce(msg); err != nil {
-		c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — failed to send order to DLQ\nworkerID=%d\norderUID=%s", workerID, toStr(eventType.Key)))
-		panic(fmt.Sprintf("worker self-termination: failed to send order to DLQ (workerID=%d, orderUID=%s)", workerID, toStr(eventType.Key)))
+		c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — failed to send order to DLQ\nworkerID=%d\norderUID=%s", workerID, ToStr(eventType.Key)))
+		panic(fmt.Sprintf("worker self-termination: failed to send order to DLQ (workerID=%d, orderUID=%s)", workerID, ToStr(eventType.Key)))
 	}
 	if err := c.commitWithRetry(eventType); err != nil {
-		c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — order sent to DLQ but offset commit failed\nworkerID=%d\norderUID=%s", workerID, toStr(eventType.Key)))
-		panic(fmt.Sprintf("worker self-termination: order sent to DLQ but offset commit failed (workerID=%d, orderUID=%s)", workerID, toStr(eventType.Key)))
+		c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — order sent to DLQ but offset commit failed\nworkerID=%d\norderUID=%s", workerID, ToStr(eventType.Key)))
+		panic(fmt.Sprintf("worker self-termination: order sent to DLQ but offset commit failed (workerID=%d, orderUID=%s)", workerID, ToStr(eventType.Key)))
 	}
 }
 
-func toStr(key []byte) string {
+func ToStr(key []byte) string {
 	return strings.Trim(string(key), `"`)
 }
 

@@ -6,12 +6,24 @@ app:
     active_consumer_workers: 3
     restart_on_panic: true
     restart_delay: 1s
+  db:
+    connection_check_interval: 3s
+    max_rtrs_bfr_cache_only_mode: 3
 
 server:
   port: "8081"
   read_timeout: 10s
   write_timeout: 10s
   max_header_bytes: 1048576
+  shutdown_timeout: 5s
+
+cache:
+  save_in_cache: true
+  cache_size: 10
+  background_cleanup: true
+  cleanup_period: 30s
+  clnr_pause_on_db_conn_check: 5s
+  order_ttl: 40s
 
 database:
   driver: postgres
@@ -24,13 +36,6 @@ database:
   max_idle_conns: 25
   conn_max_lifetime: 1h
   conn_max_idle_time: 5m
-
-cache:
-  save_in_cache: true
-  cache_size: 10
-  background_cleanup: true
-  cleanup_period: 30s
-  order_ttl: 40s
 
 kafka:
   consumer:
@@ -61,6 +66,9 @@ kafka:
     batch_size: 65536
     compression_type: snappy
     enable_idempotence: true
+    flush_time_out_ms: 5000
+    produce_retry_delay: 5s
+    event_timeout: 5s
   dlq:
     brokers:
       - localhost:9092

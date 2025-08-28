@@ -13,7 +13,7 @@ import (
 type Cache interface {
 	GetCachedOrder(orderID string) (*models.Order, bool)
 	CacheOrder(order *models.Order, logger logger.Logger)
-	CacheCleaner(ctx context.Context, logger logger.Logger)
+	CacheCleaner(ctx context.Context, logger logger.Logger, dbStatus chan bool)
 }
 
 func NewCache(storage repository.Storage, config configs.Cache, logger logger.Logger) Cache {

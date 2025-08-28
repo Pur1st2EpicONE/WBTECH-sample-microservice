@@ -14,29 +14,29 @@ func (s *Storage) SaveOrder(order *models.Order) error {
 	defer cancel()
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("postgres-storer — failed to start transaction: %v", err)
+		return fmt.Errorf("failed to start transaction: %v", err)
 	}
 	orderId, err := insertOrder(ctx, tx, order)
 	if err != nil {
 		tx.Rollback()
-		return fmt.Errorf("postgres-storer — failed to insert order: %v", err)
+		return fmt.Errorf("failed to insert order: %v", err)
 	}
 	if err := insertDelivery(ctx, tx, &order.Delivery, orderId); err != nil {
 		tx.Rollback()
-		return fmt.Errorf("postgres-storer — failed to insert delivery: %v", err)
+		return fmt.Errorf("failed to insert delivery: %v", err)
 	}
 	if err := insertPayment(ctx, tx, &order.Payment, orderId); err != nil {
 		tx.Rollback()
-		return fmt.Errorf("postgres-storer — failed to insert payment: %v", err)
+		return fmt.Errorf("failed to insert payment: %v", err)
 	}
 	for i := range order.Items {
 		if err := insertItem(ctx, tx, &order.Items[i], orderId); err != nil {
 			tx.Rollback()
-			return fmt.Errorf("postgres-storer — failed to insert item: %v", err)
+			return fmt.Errorf("failed to insert item: %v", err)
 		}
 	}
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("postgres-storer — transaction commit failed: %v", err)
+		return fmt.Errorf("transaction commit failed: %v", err)
 	}
 	return nil
 }

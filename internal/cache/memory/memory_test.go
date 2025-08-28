@@ -18,7 +18,7 @@ func TestCacheOrder_WithGoMock(t *testing.T) {
 	defer controller.Finish()
 
 	mockLogger := mock_logger.NewMockLogger(controller)
-	mockLogger.EXPECT().LogInfo("order saved", gomock.Any())
+	mockLogger.EXPECT().LogInfo("cache — order saved", gomock.Any())
 
 	cache := &Cache{
 		cachedOrders: make(map[string]*CachedOrder),
@@ -39,7 +39,7 @@ func TestNewCache_WithStorageMock(t *testing.T) {
 
 	storageMock := mock_repository.NewMockStorage(controller)
 	mockLogger := mock_logger.NewMockLogger(controller)
-	mockLogger.EXPECT().LogInfo("load from database completed", "layer", "cache.memory")
+	mockLogger.EXPECT().LogInfo("cache — load from database completed", "layer", "cache.memory")
 	storageMock.EXPECT().GetOrders(5).Return([]*models.Order{{OrderUID: "1"}, {OrderUID: "2"}}, nil)
 
 	cache := NewCache(storageMock, configs.Cache{
@@ -82,7 +82,7 @@ func TestNewCache_StorageError(t *testing.T) {
 	mockLogger := mock_logger.NewMockLogger(controller)
 
 	storageMock.EXPECT().GetOrders(5).Return(nil, fmt.Errorf("db error"))
-	mockLogger.EXPECT().LogError("failed to load orders from database -> %v", gomock.Any(), "layer", "cache.memory")
+	mockLogger.EXPECT().LogError("cache — failed to load orders from database: %v", gomock.Any(), "layer", "cache.memory")
 
 	config := configs.Cache{
 		SaveInCache:   true,
@@ -161,14 +161,14 @@ func TestCacheOrder_UpdateExisting(t *testing.T) {
 	cached := newCachedOrder(order)
 	cache.cachedOrders["1"] = cached
 
+	oldAccess := cached.lastAccess.Load()
+
 	newOrder := &models.Order{OrderUID: "1"}
 	cache.CacheOrder(newOrder, mockLogger)
 
-	if cache.cachedOrders["1"].order != newOrder {
-		t.Errorf("expected order to be updated")
-	}
-	if cache.cachedOrders["1"].lastAccess.Before(cached.lastAccess) {
-		t.Errorf("expected lastAccess to be updated")
+	newAccess := cache.cachedOrders["1"].lastAccess.Load()
+	if newAccess <= oldAccess {
+		t.Errorf("expected lastAccess to be updated, got old=%d new=%d", oldAccess, newAccess)
 	}
 }
 
@@ -188,10 +188,10 @@ func TestCacheOrder_NewOrder_Overflow(t *testing.T) {
 	}
 
 	mockStorage.EXPECT().GetOrders(gomock.Any()).Return([]*models.Order{}, nil).AnyTimes()
-	mockLogger.EXPECT().LogInfo("load from database completed", "layer", "cache.memory")
-	mockLogger.EXPECT().LogInfo("order saved", "orderUID", "1", "layer", "cache.memory")
-	mockLogger.EXPECT().LogInfo("order saved", "orderUID", "2", "layer", "cache.memory")
-	mockLogger.EXPECT().LogInfo("order saved", "orderUID", "3", "layer", "cache.memory")
+	mockLogger.EXPECT().LogInfo("cache — load from database completed", "layer", "cache.memory")
+	mockLogger.EXPECT().LogInfo("cache — order saved", "orderUID", "1", "layer", "cache.memory")
+	mockLogger.EXPECT().LogInfo("cache — order saved", "orderUID", "2", "layer", "cache.memory")
+	mockLogger.EXPECT().LogInfo("cache — order saved", "orderUID", "3", "layer", "cache.memory")
 
 	cache := NewCache(mockStorage, config, mockLogger)
 
@@ -228,26 +228,26 @@ func TestCacheCleaner(t *testing.T) {
 		cleanupPeriod: 20 * time.Millisecond,
 	}
 
-	mockLogger.EXPECT().LogInfo("order saved", "orderUID", "1", "layer", "cache.memory")
+	mockLogger.EXPECT().LogInfo("cache — order saved", "orderUID", "1", "layer", "cache.memory")
 
 	order := &models.Order{OrderUID: "1"}
 	cache.CacheOrder(order, mockLogger)
 
-	mockLogger.EXPECT().LogInfo("cleaner started", "layer", "cache.memory")
-	mockLogger.EXPECT().LogInfo("cleanup cycle started", "layer", "cache.memory").AnyTimes()
-	mockLogger.EXPECT().LogInfo("order deleted", "orderUID", "1", "layer", "cache.memory")
-	mockLogger.EXPECT().LogInfo("cleanup cycle completed", "layer", "cache.memory").AnyTimes()
-	mockLogger.EXPECT().LogInfo("cleaner stopped", "layer", "cache.memory")
+	mockLogger.EXPECT().LogInfo("cache — cleaner started", "layer", "cache.memory")
+	mockLogger.EXPECT().Debug("cache — cleanup cycle started", "layer", "cache.memory").AnyTimes()
+	mockLogger.EXPECT().Debug("cache — order deleted", "orderUID", "1", "layer", "cache.memory")
+	mockLogger.EXPECT().Debug("cache — cleanup cycle completed", "layer", "cache.memory").AnyTimes()
+	mockLogger.EXPECT().LogInfo("cache — cleaner stopped", "layer", "cache.memory")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
-	go cache.CacheCleaner(ctx, mockLogger)
+	go cache.CacheCleaner(ctx, mockLogger, make(chan bool))
 
 	time.Sleep(150 * time.Millisecond)
 
 	if _, ok := cache.cachedOrders["1"]; ok {
-		t.Error("order1 should have been deleted by CacheCleaner")
+		t.Error("order 1 should have been deleted by CacheCleaner")
 	}
 }
 
@@ -262,5 +262,37 @@ func TestCacheCleaner_Disabled(t *testing.T) {
 		cachedOrders: make(map[string]*CachedOrder),
 	}
 
-	cache.CacheCleaner(context.Background(), mockLogger)
+	cache.CacheCleaner(context.Background(), mockLogger, make(chan bool))
+}
+
+func TestCacheCleaner_DBDown(t *testing.T) {
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+
+	logger := mock_logger.NewMockLogger(controller)
+	logger.EXPECT().LogInfo(gomock.Any(), gomock.Any()).AnyTimes()
+	logger.EXPECT().Debug(gomock.Any(), gomock.Any()).AnyTimes()
+
+	cache := &Cache{
+		bgCleanup:     true,
+		cleanupPeriod: 50 * time.Millisecond,
+		cachedOrders: map[string]*CachedOrder{
+			"1": newCachedOrder(&models.Order{OrderUID: "1"}),
+		},
+	}
+
+	ctx := t.Context()
+
+	dbStatus := make(chan bool, 1)
+
+	go cache.CacheCleaner(ctx, logger, dbStatus)
+
+	dbStatus <- false
+	time.Sleep(1 * time.Second)
+	dbStatus <- true
+	time.Sleep(1 * time.Second)
+
+	if cache.pauseCleaner {
+		t.Errorf("expected pauseCleaner to be false after DB is restored")
+	}
 }

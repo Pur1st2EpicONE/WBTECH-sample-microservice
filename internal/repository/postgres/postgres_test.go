@@ -54,7 +54,7 @@ func TestPostgresStorer_Close_Success(t *testing.T) {
 	xdb := sqlx.NewDb(db, "sqlmock")
 	storer := postgres.NewStorage(xdb, mockLogger)
 
-	mockLogger.EXPECT().LogInfo("postgres — stopped").Times(1)
+	mockLogger.EXPECT().LogInfo("postgres — stopped", "layer", "repository.postgres").Times(1)
 
 	storer.Close()
 

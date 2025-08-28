@@ -8,60 +8,12 @@ import (
 	context "context"
 	reflect "reflect"
 
-	configs "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
+	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
 	repository "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/repository"
 	logger "github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger"
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockConsumer is a mock of Consumer interface.
-type MockConsumer struct {
-	ctrl     *gomock.Controller
-	recorder *MockConsumerMockRecorder
-}
-
-// MockConsumerMockRecorder is the mock recorder for MockConsumer.
-type MockConsumerMockRecorder struct {
-	mock *MockConsumer
-}
-
-// NewMockConsumer creates a new mock instance.
-func NewMockConsumer(ctrl *gomock.Controller) *MockConsumer {
-	mock := &MockConsumer{ctrl: ctrl}
-	mock.recorder = &MockConsumerMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockConsumer) EXPECT() *MockConsumerMockRecorder {
-	return m.recorder
-}
-
-// Close mocks base method.
-func (m *MockConsumer) Close(logger logger.Logger) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Close", logger)
-}
-
-// Close indicates an expected call of Close.
-func (mr *MockConsumerMockRecorder) Close(logger interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockConsumer)(nil).Close), logger)
-}
-
-// Run mocks base method.
-func (m *MockConsumer) Run(ctx context.Context, storage repository.Storage, logger logger.Logger, consumerID int) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Run", ctx, storage, logger, consumerID)
-}
-
-// Run indicates an expected call of Run.
-func (mr *MockConsumerMockRecorder) Run(ctx, storage, logger, consumerID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockConsumer)(nil).Run), ctx, storage, logger, consumerID)
-}
-
-// MockProducer is a mock of Producer interface.
 type MockProducer struct {
 	ctrl     *gomock.Controller
 	recorder *MockProducerMockRecorder
@@ -108,4 +60,51 @@ func (m *MockProducer) Produce(message configs.Message) error {
 func (mr *MockProducerMockRecorder) Produce(message interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Produce", reflect.TypeOf((*MockProducer)(nil).Produce), message)
+}
+
+// MockConsumer is a mock of Consumer interface.
+type MockConsumer struct {
+	ctrl     *gomock.Controller
+	recorder *MockConsumerMockRecorder
+}
+
+// MockConsumerMockRecorder is the mock recorder for MockConsumer.
+type MockConsumerMockRecorder struct {
+	mock *MockConsumer
+}
+
+// NewMockConsumer creates a new mock instance.
+func NewMockConsumer(ctrl *gomock.Controller) *MockConsumer {
+	mock := &MockConsumer{ctrl: ctrl}
+	mock.recorder = &MockConsumerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockConsumer) EXPECT() *MockConsumerMockRecorder {
+	return m.recorder
+}
+
+// Close mocks base method.
+func (m *MockConsumer) Close(logger logger.Logger) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Close", logger)
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockConsumerMockRecorder) Close(logger interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockConsumer)(nil).Close), logger)
+}
+
+// Run mocks base method.
+func (m *MockConsumer) Run(ctx context.Context, storage repository.Storage, logger logger.Logger, workerID int) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Run", ctx, storage, logger, workerID)
+}
+
+// Run indicates an expected call of Run.
+func (mr *MockConsumerMockRecorder) Run(ctx, storage, logger, workerID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockConsumer)(nil).Run), ctx, storage, logger, workerID)
 }

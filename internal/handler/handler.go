@@ -35,9 +35,9 @@ func (h *Handler) getOrder(c *gin.Context) {
 	orderID := c.Param("orderId")
 	order, fromCache, err := h.service.GetOrder(orderID, h.logger)
 	if err != nil {
-		h.logger.Debug("getOrder failed", err)
+		h.logger.Debug("handler — failed to get order", "orderUID", orderID, "layer", "handler")
 		if strings.Contains(err.Error(), "sql: no rows in result set") {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("%s — order not found", orderID)})
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("%s — order not found", orderID)})
 			return
 		}
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "something broke on our end, sorry :("})

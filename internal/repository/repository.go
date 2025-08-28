@@ -28,8 +28,7 @@ func ConnectDB(config configs.Database) (*sqlx.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("database driver not found or DSN invalid: %v", err)
 	}
-	err = db.Ping()
-	if err != nil {
+	if err = db.Ping(); err != nil {
 		return nil, fmt.Errorf("database ping failed: %v", err)
 	}
 	db.SetMaxOpenConns(config.MaxOpenConns)
