@@ -21,9 +21,9 @@ cache:
   save_in_cache: true
   cache_size: 10
   background_cleanup: true
-  cleanup_period: 30s
+  cleanup_period: 15s
   clnr_pause_on_db_conn_check: 5s
-  order_ttl: 40s
+  order_ttl: 20s
 
 database:
   driver: postgres

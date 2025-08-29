@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Main page</title>
+    <style>
+        html, body {
+            margin: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background: url('/static/main_page.png') no-repeat center center;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .order-form {
+            background: rgb(255, 255, 255);
+            padding: 100px 30px;
+            text-align: center;
+            border-radius: 10px;
+        }
+        .order-form h2 {
+            margin-bottom: 10px; 
+        }
+        .order-form input[type="text"] {
+            padding:10px;
+            width: 200px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+        .order-form button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: rgb(112, 0, 255);
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .order-form button:hover {
+            background-color: #ff017b;
+        }
+    </style>
+</head>
+<body>
+    <form class="order-form" onsubmit="goToOrder(event)">
+        <h2>Let's find your order</h2>
+        <input type="text" id="orderId" placeholder="Order ID" required>
+        <br>
+        <button type="submit">Search</button>
+    </form>
+
+    <script>
+        function goToOrder(e) {
+            e.preventDefault();
+            const orderId = document.getElementById("orderId").value.trim();
+            if(orderId) {
+                window.location.href = `/orders/${orderId}`;
+            }
+        }
+    </script>
+</body>
+</html>

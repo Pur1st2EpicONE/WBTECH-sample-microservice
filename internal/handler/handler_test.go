@@ -24,13 +24,14 @@ func TestInitRoutes_OrderRoute(t *testing.T) {
 	mockLogger, _ := logger.NewLogger(configs.Logger{LogDir: "/tmp", Debug: false})
 
 	h := NewHandler(mockService, mockLogger)
+	h.TemplatePath = ""
 
 	gin.SetMode(gin.ReleaseMode)
 	router := h.InitRoutes()
 	order := &models.Order{OrderUID: "orderAbobaId"}
 	mockService.EXPECT().GetOrder("orderAbobaId", gomock.Any()).Return(order, false, nil)
 
-	req := httptest.NewRequest(http.MethodGet, "/orders/orderAbobaId", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/orders/orderAbobaId", nil)
 	w := httptest.NewRecorder()
 
 	router.ServeHTTP(w, req)

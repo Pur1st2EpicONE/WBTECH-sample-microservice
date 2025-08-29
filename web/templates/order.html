@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order Info</title>
+    <style>
+        html, body {
+            margin: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background: url('/static/main_page.jpg') no-repeat center center;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-image 0.3s ease-in-out;
+        }
+        .order-box {
+            background: rgb(255, 255, 255);
+            padding: 20px 30px;
+            max-width: 90%;
+            max-height: 92%;
+            overflow: auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            text-align: left;
+            border-radius: 12px;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+            font-size: 12px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="order-box" id="order-box">
+        <pre id="json-data"></pre>
+    </div>
+
+<script>
+    const orderId = "{{.orderId}}";
+    const orderBox = document.getElementById('order-box');
+
+    fetch(`/api/orders/${orderId}`)
+        .then(res => {
+            if (res.status === 404) {
+                document.body.style.backgroundImage = "url('/static/not_found.jpg')";
+                orderBox.classList.add('hidden'); 
+            } else if (res.status === 500) {
+                document.body.style.backgroundImage = "url('/static/internal_error.jpg')";
+                orderBox.classList.add('hidden');
+            }
+            
+            const cacheHeader = res.headers.get("X-Cache");
+            if (cacheHeader === "HIT") {
+                document.body.style.backgroundImage = "url('/static/found_cached.jpg')";
+            } else if (cacheHeader === "MISS") {
+                document.body.style.backgroundImage = "url('/static/found_not_cached.jpg')";
+            }
+            return res.json();
+        })
+        .then(data => {
+            document.getElementById('json-data').textContent = JSON.stringify(data, null, 2);
+        });
+</script>
+
+</body>
+</html>
