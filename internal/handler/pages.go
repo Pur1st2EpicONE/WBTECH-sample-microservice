@@ -11,7 +11,7 @@ func (h *Handler) showHomePage(c *gin.Context) {
 }
 
 func (h *Handler) showOrderPage(c *gin.Context) {
-	c.HTML(200, "order.html", gin.H{
+	c.HTML(http.StatusOK, "order.html", gin.H{
 		"orderId": c.Param("orderId"),
 	})
 }

@@ -152,7 +152,7 @@ func (c *KafkaConsumer) commitWithRetry(msg *kafka.Message) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("critical error — failed to commit offset after %d attempts: %w", c.commitRetryMax, err)
+	return fmt.Errorf("failed to commit offset after %d attempts: %w", c.commitRetryMax, err)
 }
 
 func (c *KafkaConsumer) sendToDLQ(eventType *kafka.Message, retryCnt int, workerID int) {

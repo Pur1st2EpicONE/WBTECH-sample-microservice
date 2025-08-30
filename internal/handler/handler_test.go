@@ -31,7 +31,7 @@ func TestInitRoutes_OrderRoute(t *testing.T) {
 	order := &models.Order{OrderUID: "orderAbobaId"}
 	mockService.EXPECT().GetOrder("orderAbobaId", gomock.Any()).Return(order, false, nil)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/orders/orderAbobaId", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/orders/orderAbobaId", nil)
 	w := httptest.NewRecorder()
 
 	router.ServeHTTP(w, req)

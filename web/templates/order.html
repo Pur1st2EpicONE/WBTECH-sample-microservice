@@ -47,7 +47,7 @@
     const orderId = "{{.orderId}}";
     const orderBox = document.getElementById('order-box');
 
-    fetch(`/api/orders/${orderId}`)
+    fetch(`/api/v1/orders/${orderId}`)
         .then(res => {
             if (res.status === 404) {
                 document.body.style.backgroundImage = "url('/static/not_found.jpg')";

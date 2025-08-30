@@ -86,15 +86,6 @@ func Start() *App {
 		wg:              wg}
 }
 
-func wireApp(db *sqlx.DB, config configs.App, logger logger.Logger) (*server.Server, cache.Cache, repository.Storage) {
-	storage := repository.NewStorage(db, logger)
-	cache := cache.NewCache(storage, config.Cache, logger)
-	service := service.NewService(storage, cache)
-	handler := (handler.NewHandler(service, logger)).InitRoutes()
-	server := server.NewServer(config.Server, handler)
-	return server, cache, storage
-}
-
 func newContext(logger logger.Logger) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(context.Background()) // can't get signal info with signal.NotifyContext
 	sigCh := make(chan os.Signal, 1)
@@ -105,6 +96,15 @@ func newContext(logger logger.Logger) (context.Context, context.CancelFunc) {
 		cancel()
 	}()
 	return ctx, cancel
+}
+
+func wireApp(db *sqlx.DB, config configs.App, logger logger.Logger) (*server.Server, cache.Cache, repository.Storage) {
+	storage := repository.NewStorage(db, logger)
+	cache := cache.NewCache(storage, config.Cache, logger)
+	service := service.NewService(storage, cache)
+	handler := (handler.NewHandler(service, logger)).InitRoutes()
+	server := server.NewServer(config.Server, handler)
+	return server, cache, storage
 }
 
 func (a *App) RunCacheCleaner() {
