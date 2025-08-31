@@ -1,3 +1,5 @@
+// Package slog provides a JSON-based structured logger implementation for the service.
+// It wraps Go's slog package and supports logging to stdout or a file with configurable log levels.
 package slog
 
 import (
@@ -9,10 +11,13 @@ import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
 )
 
+// Logger wraps a slog.Logger and implements the Logger interface.
 type Logger struct {
 	logger *slog.Logger
 }
 
+// NewLogger creates a new Logger instance based on the provided configuration.
+// It returns the logger and the file used for logging (or stdout if a file is not used).
 func NewLogger(config configs.Logger) (*Logger, *os.File) {
 	var logDest *os.File
 	if config.LogDir == "" {
@@ -35,6 +40,8 @@ func NewLogger(config configs.Logger) (*Logger, *os.File) {
 	return logger, logDest
 }
 
+// openFile ensures the log directory exists and opens the log file for appending.
+// Returns nil if the file cannot be created, in which case stdout will be used.
 func openFile(logDir string) *os.File {
 	if err := os.MkdirAll(logDir, 0777); err != nil {
 		fmt.Fprintf(os.Stderr, "logger — failed to create log directory switching to stdout: %v\n", err)
@@ -49,6 +56,7 @@ func openFile(logDir string) *os.File {
 	return logFile
 }
 
+// LogFatal logs a fatal message with an error and exits the program.
 func (l *Logger) LogFatal(msg string, err error, args ...any) {
 	if err != nil {
 		args = append(args, "err", err.Error())
@@ -57,6 +65,7 @@ func (l *Logger) LogFatal(msg string, err error, args ...any) {
 	os.Exit(1)
 }
 
+// LogError logs an error message with an optional error.
 func (l *Logger) LogError(msg string, err error, args ...any) {
 	if err != nil {
 		args = append(args, "err", err.Error())
@@ -64,10 +73,12 @@ func (l *Logger) LogError(msg string, err error, args ...any) {
 	slog.Error(msg, args...)
 }
 
+// LogInfo logs an informational message.
 func (l *Logger) LogInfo(msg string, args ...any) {
 	slog.Info(msg, args...)
 }
 
+// Debug logs a debug message.
 func (l *Logger) Debug(msg string, args ...any) {
 	l.logger.Debug(msg, args...)
 }

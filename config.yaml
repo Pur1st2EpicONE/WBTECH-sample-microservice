@@ -1,87 +1,93 @@
+# Application-wide settings
 app:
   logger:
-    log_directory: ./logs
-    debug_mode: true
+    log_directory: ./logs      # Directory where logs will be stored; if empty, logs will be written to stdout
+    debug_mode: true           # Enable debug-level logging
   workers: 
-    active_consumer_workers: 3
-    restart_on_panic: true
-    restart_delay: 1s
+    active_consumer_workers: 3      # Number of active Kafka consumer workers
+    restart_on_panic: true          # Restart worker if it panics
+    restart_delay: 1s               # Delay before restarting a panicked worker
   db:
-    connection_check_interval: 3s
-    max_rtrs_bfr_cache_only_mode: 3
+    connection_check_interval: 3s       # Interval between database connection health checks
+    max_rtrs_bfr_cache_only_mode: 3     # Max retries before switching to cache-only mode
 
+# HTTP server configuration
 server:
-  port: "8081"
-  read_timeout: 10s
-  write_timeout: 10s
-  max_header_bytes: 1048576
-  shutdown_timeout: 5s
+  port: "8081"               # Port where the server will listen
+  read_timeout: 10s          # Max duration for reading request
+  write_timeout: 10s         # Max duration for writing response
+  max_header_bytes: 1048576  # Maximum header size in bytes
+  shutdown_timeout: 5s       # Timeout for graceful server shutdown
 
+# Cache configuration
 cache:
-  save_in_cache: true
-  cache_size: 10
-  background_cleanup: true
-  cleanup_period: 15s
-  clnr_pause_on_db_conn_check: 5s
-  order_ttl: 20s
+  save_in_cache: true                  # Enable caching of orders
+  cache_size: 10                       # Max number of orders to keep in cache
+  background_cleanup: true             # Run periodic cleanup of expired cache entries
+  cleanup_period: 15s                  # Interval between cache cleanups
+  clnr_pause_on_db_conn_check: 5s      # Pause cleanup during DB connection check
+  order_ttl: 20s                       # Time-to-live for cached orders
 
+# Database connection settings
 database:
-  driver: postgres
-  host: localhost
-  port: 5433
-  username: Neo
-  dbname: wb-service-db
-  sslmode: disable
-  max_open_conns: 57
-  max_idle_conns: 25
-  conn_max_lifetime: 1h
-  conn_max_idle_time: 5m
+  driver: postgres            # Database driver to use 
+  host: localhost             # Database host address
+  port: 5433                  # Database port
+  username: Neo               # Database username
+  dbname: wb-service-db       # Name of the database to connect to
+  sslmode: disable            # SSL mode for the connection 
+  max_open_conns: 57          # Maximum number of open DB connections
+  max_idle_conns: 25          # Maximum number of idle DB connections
+  conn_max_lifetime: 1h       # Max lifetime of a DB connection
+  conn_max_idle_time: 5m      # Max idle time before closing a connection
 
+# Kafka configuration
 kafka:
   consumer:
     brokers:
-      - localhost:9092
-    topic: orders
-    client_id: order-consumer
-    group_id: order-consumers
-    enable_auto_commit: false
-    auto_offset_reset: earliest
-    session_timeout_ms: 10000
-    max_poll_interval_ms: 300000
-    save_order_retry_delay: 5s
-    save_order_retry_max: 3
-    commit_retry_delay: 5s
-    commit_retry_max: 3
-    event_type_errors_max: 3
-    event_type_error_retry_delay: 10s
+      - localhost:9092                     # List of Kafka brokers for the consumer
+    topic: orders                          # Topic to consume messages from
+    client_id: order-consumer              # Consumer client ID
+    group_id: order-consumers              # Consumer group ID
+    enable_auto_commit: false              # Disable auto-committing offsets
+    auto_offset_reset: earliest            # Start reading from the earliest offset if no offset is found
+    session_timeout_ms: 10000              # Timeout for consumer session in milliseconds
+    max_poll_interval_ms: 300000           # Maximum interval between polls before considered dead
+    save_order_retry_delay: 5s             # Delay between retries when saving order fails
+    save_order_retry_max: 3                # Max number of retries when saving order fails
+    commit_retry_delay: 5s                 # Delay between retries when committing offsets fails
+    commit_retry_max: 3                    # Max number of retries when committing offsets fails
+    event_type_errors_max: 3               # Max allowed errors of the same event type before handling
+    event_type_error_retry_delay: 10s      # Delay between retries for event type errors
   producer:
     brokers:
-      - localhost:9092
-    topic: orders
-    client_id: order-producer
-    messages_to_send: 10
-    acks: all
-    retry_max: 3 
-    linger_ms: 5
-    batch_size: 65536
-    compression_type: snappy
-    enable_idempotence: true
-    flush_time_out_ms: 5000
-    produce_retry_delay: 5s
-    event_timeout: 5s
-  dlq:
+      - localhost:9092             # List of Kafka brokers for the producer
+    topic: orders                  # Topic to produce messages to
+    client_id: order-producer      # Producer client ID
+    messages_to_send: 10           # Number of messages to send in one batch
+    acks: all                      # Wait for all in-sync replicas to acknowledge
+    retry_max: 3                   # Max number of retry attempts
+    linger_ms: 5                   # Time to wait before sending a batch
+    batch_size: 65536              # Maximum batch size in bytes
+    compression_type: snappy       # Compression algorithm for messages
+    enable_idempotence: true       # Enable idempotent producer to prevent duplicates
+    flush_time_out_ms: 5000        # Maximum time to wait for flush
+    produce_retry_attempts: 5      # Retry attempts for producing messages
+    produce_retry_delay: 5s        # Delay between produce retries
+    event_timeout: 5s              # Timeout for event processing
+  dlq:                            
     brokers:
-      - localhost:9092
-    topic: orders-dlq
-    client_id: order-dlq-producer
-    acks: all
-    retry_max: 3
-    linger_ms: 5
-    batch_size: 65536
-    compression_type: snappy
-    enable_idempotence: true
+      - localhost:9092                 # Kafka brokers for DLQ
+    topic: orders-dlq                  # Topic for failed messages
+    client_id: order-dlq-producer      # DLQ producer client ID
+    acks: all                          # Wait for all in-sync replicas
+    retry_max: 3                       # Max retry attempts
+    linger_ms: 5                       # Linger time for batch sending
+    batch_size: 65536                  # Max batch size in bytes
+    compression_type: snappy           # Compression algorithm
+    enable_idempotence: true           # Idempotent producer to prevent duplicates
 
+# Notifier settings
 notifier:
   telegram:
-    chat_id: "805862991"
-    
+    chat_id: "805862991"      # Telegram chat ID for sending notifications

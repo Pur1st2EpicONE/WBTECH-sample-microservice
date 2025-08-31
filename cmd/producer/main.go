@@ -1,3 +1,6 @@
+// This is a standalone Kafka producer for testing purposes.
+// Everything inside this package is not part of the main service and
+// is just quick-and-dirty code to generate and send test orders.
 package main
 
 import (
@@ -12,6 +15,9 @@ import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger"
 )
 
+// Entry point for the Kafka order producer application
+// Loads configuration, initializes logger and Kafka producer,
+// generates orders (including a bad order for testing), and sends them to Kafka
 func main() {
 	loggerConfig := configs.Logger{LogDir: "", Debug: false}
 	logger, _ := logger.NewLogger(loggerConfig)

@@ -61,4 +61,6 @@ CREATE TABLE IF NOT EXISTS items (
     CONSTRAINT fk_item_track_number FOREIGN KEY (track_number) REFERENCES orders(track_number) ON DELETE CASCADE
 );
 
+-- Queries will primarily search orders, deliveries, and payments by their primary keys (id columns),
+-- while lookups for items within an order will use the idx_items index on order_id for faster access.
 CREATE INDEX idx_items_order_id ON items(order_id);

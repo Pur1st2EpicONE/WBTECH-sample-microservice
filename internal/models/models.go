@@ -2,6 +2,7 @@ package models
 
 import "time"
 
+// Order represents a single customer order with all related details.
 type Order struct {
 	OrderUID          string    `json:"order_uid" validate:"required"`
 	TrackNumber       string    `json:"track_number" validate:"required"`
@@ -19,6 +20,7 @@ type Order struct {
 	OofShard          string    `json:"oof_shard" validate:"required"`
 }
 
+// Delivery holds the recipient and address information for an order.
 type Delivery struct {
 	Name    string `json:"name" validate:"required"`
 	Phone   string `json:"phone" validate:"required"`
@@ -29,6 +31,7 @@ type Delivery struct {
 	Email   string `json:"email" validate:"required,email"`
 }
 
+// Payment represents payment details for an order.
 type Payment struct {
 	Transaction  string  `json:"transaction" validate:"required"`
 	RequestID    string  `json:"request_id"`
@@ -42,6 +45,7 @@ type Payment struct {
 	CustomFee    float64 `json:"custom_fee"`
 }
 
+// Item represents a single item within an order.
 type Item struct {
 	ChrtID      int     `json:"chrt_id" validate:"required"`
 	TrackNumber string  `json:"track_number" validate:"required"`

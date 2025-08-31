@@ -1,3 +1,13 @@
+// Package memory provides an in-memory cache for orders.
+//
+// The cache supports fast retrieval of recent orders and a background
+// cleaner that removes old orders based on TTL. It uses a ring buffer
+// to maintain a fixed size, ensuring that the cache never grows
+// beyond the configured limit.
+//
+// The background cleaner periodically purges expired orders from the cache.
+// When DB connectivity is lost, it pauses to minimize disruption, ensuring
+// that existing cached orders stay accessible.
 package memory
 
 import (
@@ -12,17 +22,20 @@ import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/pkg/logger"
 )
 
+// Cache is an in-memory cache for orders with optional background cleanup.
 type Cache struct {
-	bgCleanup     bool
-	mu            sync.RWMutex
+	bgCleanup     bool         // whether background cleanup is enabled
+	mu            sync.RWMutex // protects access to cachedOrders
 	cachedOrders  map[string]*CachedOrder
-	orderTTL      time.Duration
-	queue         *Queue
-	cleanupPeriod time.Duration
-	pauseCleaner  bool
-	pauseDuration time.Duration
+	orderTTL      time.Duration // time-to-live for cached orders
+	queue         *Queue        // ring buffer to track order insertion for eviction
+	cleanupPeriod time.Duration // interval between cleanup cycles
+	pauseCleaner  bool          // indicates if cleaner is paused (e.g., DB disconnected)
+	pauseDuration time.Duration // how long to sleep when cleaner is paused
 }
 
+// NewCache creates a new in-memory cache and preloads it with recent orders
+// from storage if enabled in configuration.
 func NewCache(storage repository.Storage, config configs.Cache, logger logger.Logger) *Cache {
 	if !config.SaveInCache || config.CacheSize < 1 {
 		return new(Cache)
@@ -53,17 +66,20 @@ func NewCache(storage repository.Storage, config configs.Cache, logger logger.Lo
 	}
 }
 
+// CachedOrder represents an order in the cache along with its last access time.
 type CachedOrder struct {
 	order      *models.Order
 	lastAccess atomic.Int64
 }
 
+// newCachedOrder creates a cached order and sets the initial access time.
 func newCachedOrder(order *models.Order) *CachedOrder {
 	cachedOrder := &CachedOrder{order: order}
 	cachedOrder.lastAccess.Store(time.Now().UnixNano())
 	return cachedOrder
 }
 
+// Queue implements a simple ring buffer for maintaining the order of cached orders.
 type Queue struct {
 	buffer []string
 	head   int
@@ -71,10 +87,15 @@ type Queue struct {
 	size   int
 }
 
+// newQueue creates a new fixed-size ring buffer.
 func newQueue(size int) *Queue {
 	return &Queue{buffer: make([]string, size)}
 }
 
+// enqueue adds an order UID to the ring buffer.
+// When the buffer is full, the oldest UID is overwritten.
+// The buffer stores only order UIDs, which are lightweight,
+// while full order data is kept separately in the cache.
 func (q *Queue) enqueue(orderUID string) string {
 	var tail string
 	if q.size == len(q.buffer) {
@@ -98,6 +119,9 @@ func (q *Queue) moveIndex(i int) int {
 	return i
 }
 
+// GetCachedOrder retrieves an order from the cache by ID.
+// Returns the order and true if found; otherwise nil and false.
+// Updates last access time to support TTL-based eviction.
 func (c *Cache) GetCachedOrder(orderID string) (*models.Order, bool) {
 	if c.queue == nil {
 		return nil, false
@@ -112,6 +136,9 @@ func (c *Cache) GetCachedOrder(orderID string) (*models.Order, bool) {
 	return cachedOrder.order, true
 }
 
+// CacheOrder adds or updates an order in the cache.
+// Evicts the oldest order if the cache is full.
+// Logs information when a new order is added.
 func (c *Cache) CacheOrder(order *models.Order, logger logger.Logger) {
 	if c.queue == nil {
 		return
@@ -130,6 +157,13 @@ func (c *Cache) CacheOrder(order *models.Order, logger logger.Logger) {
 	c.mu.Unlock()
 }
 
+// CacheCleaner runs in the background and periodically removes expired orders.
+//
+// The cleaner monitors database connectivity and pauses if the DB is unreachable,
+// ensuring that cached orders remain accessible to consumers even during outages.
+//
+// Only orders exceeding the configured TTL are removed. This approach minimizes
+// potential disruption for active users while keeping the cache size under control.
 func (c *Cache) CacheCleaner(ctx context.Context, logger logger.Logger, dbStatus chan bool) {
 	if !c.bgCleanup {
 		return

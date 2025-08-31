@@ -8,6 +8,7 @@ import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 )
 
+// GetOrder retrieves a single order by its UID, including delivery, payment, and item details.
 func (s *Storage) GetOrder(orderUID string) (*models.Order, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -22,6 +23,7 @@ func (s *Storage) GetOrder(orderUID string) (*models.Order, error) {
 	return order, nil
 }
 
+// queryAllButItems queries order, delivery, and payment information excluding items.
 func queryAllButItems(ctx context.Context, s *Storage, order *models.Order, orderUID string, orderId *int) error {
 	query := `SELECT 
 
@@ -103,6 +105,7 @@ func queryAllButItems(ctx context.Context, s *Storage, order *models.Order, orde
 	return nil
 }
 
+// queryItems retrieves all item records associated with a given order ID.
 func queryItems(ctx context.Context, s *Storage, items *[]models.Item, orderId int) error {
 	query := `SELECT 
         chrt_id,
@@ -148,8 +151,10 @@ func queryItems(ctx context.Context, s *Storage, items *[]models.Item, orderId i
 	return rows.Err()
 }
 
+// GetOrders retrieves multiple orders, optionally limited by a specified amount.
+// Each order includes delivery, payment, and item details.
 func (s *Storage) GetOrders(amount ...int) ([]*models.Order, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	query := `SELECT 

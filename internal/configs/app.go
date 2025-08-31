@@ -1,3 +1,21 @@
+/*
+Package configs provides structured configuration for the application.
+
+It loads settings from environment variables and configuration files (.env and config.yaml)
+using godotenv and viper. The package centralizes configuration for:
+
+  - HTTP server parameters
+  - Database connections
+  - In-memory caching
+  - Kafka consumer/producer settings
+  - Logging
+  - Notifications (e.g., Telegram bot)
+  - Worker behavior and shutdown policies
+
+Sensitive values like passwords and API tokens are read from environment variables
+to avoid hardcoding secrets. Explicit viper.Get* calls are used to preserve polymorphism,
+allowing optional components (Kafka, NATS, RabbitMQ) without tying them directly to the App struct.
+*/
 package configs
 
 import (
@@ -9,6 +27,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+// App holds all top-level configuration for the application,
+// including server, database, cache, consumer, logger, notifier, and worker settings.
 type App struct {
 	Server          Server
 	Database        Database
@@ -23,14 +43,16 @@ type App struct {
 	DbMaxChecks     int
 }
 
+// Server contains HTTP server configuration.
 type Server struct {
-	Port            string
-	ReadTimeout     time.Duration
-	WriteTimeout    time.Duration
-	MaxHeaderBytes  int
-	ShutdownTimeout time.Duration
+	Port            string        // port to listen on
+	ReadTimeout     time.Duration // maximum duration for reading the request
+	WriteTimeout    time.Duration // maximum duration before timing out writes
+	MaxHeaderBytes  int           // maximum size of request headers
+	ShutdownTimeout time.Duration // graceful shutdown timeout
 }
 
+// Database holds database connection parameters.
 type Database struct {
 	Driver          string
 	Host            string
@@ -45,25 +67,36 @@ type Database struct {
 	ConnMaxIdleTime time.Duration
 }
 
+// Cache contains in-memory caching configuration.
 type Cache struct {
-	SaveInCache   bool
-	CacheSize     int
-	BgCleanup     bool
-	CleanupPeriod time.Duration
-	OrderTTL      time.Duration
-	PauseDuration time.Duration
+	SaveInCache   bool          // whether to store orders in memory
+	CacheSize     int           // maximum number of orders to cache
+	BgCleanup     bool          // whether background cleaner is enabled
+	CleanupPeriod time.Duration // period between cleanup cycles
+	OrderTTL      time.Duration // time-to-live for cached orders
+	PauseDuration time.Duration // pause duration when DB is unreachable
 }
 
+// Logger defines logging configuration.
 type Logger struct {
-	LogDir string
-	Debug  bool
+	LogDir string // directory to store logs
+	Debug  bool   // whether debug mode is enabled
 }
 
+// Notifier holds configuration for external notifications.
 type Notifier struct {
-	Token    string
-	Receiver string
+	Token    string // authentication token (e.g., Telegram bot)
+	Receiver string // recipient identifier (e.g., Telegram chat ID)
 }
 
+// Load reads environment variables and configuration files to
+// populate the App struct with all settings.
+//
+// It uses godotenv for .env files and viper for config.yaml.
+// Sensitive fields like database password and bot token are read from the environment.
+//
+// Explicit viper.Get* calls are used instead of viper.Unmarshal
+// to preserve polymorphism in interchangeable sub-structures like Kafka, NATS and RabbitMQ.
 func Load() (App, error) {
 	if err := godotenv.Load(); err != nil {
 		return App{}, fmt.Errorf("godotenv — failed to %v", err) // phrasing is odd here, but gives a clean error message in logs
@@ -91,13 +124,7 @@ func Load() (App, error) {
 	}, nil
 }
 
-/*
-Using explicit viper.Get* calls instead of viper.Unmarshal because
-unmarshaling would force embedding KafkaConsumer fields directly into App,
-breaking polymorphism. This way, we keep Kafka, NATS, RabbitMQ as optional
-interchangeable sub-structures without tying them to App directly.
-*/
-
+// srvConfig reads server-related configuration from viper.
 func srvConfig() Server {
 	return Server{
 		Port:            viper.GetString("server.port"),
@@ -108,6 +135,7 @@ func srvConfig() Server {
 	}
 }
 
+// dbConfig reads database-related configuration from viper and environment variables.
 func dbConfig() Database {
 	return Database{
 		Driver:          viper.GetString("database.driver"),
@@ -124,6 +152,7 @@ func dbConfig() Database {
 	}
 }
 
+// cacheConfig reads cache settings from viper.
 func cacheConfig() Cache {
 	return Cache{
 		SaveInCache:   viper.GetBool("cache.save_in_cache"),
@@ -135,6 +164,7 @@ func cacheConfig() Cache {
 	}
 }
 
+// loggerConfig reads logger settings from viper.
 func loggerConfig() Logger {
 	return Logger{
 		LogDir: viper.GetString("app.logger.log_directory"),
@@ -142,6 +172,7 @@ func loggerConfig() Logger {
 	}
 }
 
+// notifierConfig reads notifier settings from viper and environment variables.
 func notifierConfig() Notifier {
 	return Notifier{
 		Token:    os.Getenv("TG_BOT_TOKEN"),

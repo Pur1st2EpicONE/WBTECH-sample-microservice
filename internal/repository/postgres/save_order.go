@@ -9,10 +9,11 @@ import (
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/models"
 )
 
+// SaveOrder inserts a complete order with delivery, payment, and items into the database as a single transaction
 func (s *Storage) SaveOrder(order *models.Order) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	tx, err := s.db.BeginTx(ctx, nil)
+	tx, err := s.db.BeginTx(ctx, nil) // considered adding configurable isolation level via main config, but decided it’s unnecessary — YAGNI
 	if err != nil {
 		return fmt.Errorf("failed to start transaction: %v", err)
 	}
@@ -41,6 +42,7 @@ func (s *Storage) SaveOrder(order *models.Order) error {
 	return nil
 }
 
+// insertOrder inserts the main order record and returns the generated order ID
 func insertOrder(ctx context.Context, tx *sql.Tx, order *models.Order) (int, error) {
 	var id int
 	query := `
@@ -92,6 +94,7 @@ func insertOrder(ctx context.Context, tx *sql.Tx, order *models.Order) (int, err
 	return id, nil
 }
 
+// insertDelivery inserts delivery details associated with the given order ID
 func insertDelivery(ctx context.Context, tx *sql.Tx, delivery *models.Delivery, orderID int) error {
 	query := `
 	INSERT INTO deliveries (
@@ -130,6 +133,7 @@ func insertDelivery(ctx context.Context, tx *sql.Tx, delivery *models.Delivery, 
 	return err
 }
 
+// insertPayment inserts payment details associated with the given order ID
 func insertPayment(ctx context.Context, tx *sql.Tx, payment *models.Payment, orderID int) error {
 	paymentTime := time.Unix(payment.PaymentDT, 0)
 	query := `
@@ -178,6 +182,7 @@ func insertPayment(ctx context.Context, tx *sql.Tx, payment *models.Payment, ord
 	return err
 }
 
+// insertItem inserts a single item associated with the given order ID
 func insertItem(ctx context.Context, tx *sql.Tx, item *models.Item, orderID int) error {
 	query := `
 	INSERT INTO items (

@@ -1,3 +1,14 @@
+/*
+Package kafka provides Kafka-based implementations of broker interfaces.
+
+It includes:
+  - KafkaConsumer: a consumer instance that processes messages from Kafka topics.
+  - KafkaProducer: a producer instance used for sending messages (e.g., to a DLQ).
+
+KafkaConsumer handles message consumption, retries, DLQ routing, and critical error
+notifications. It is designed to be supervised by the orchestration layer
+(App) and can trigger self-termination on unrecoverable errors.
+*/
 package kafka
 
 import (
@@ -13,20 +24,44 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
+/*
+KafkaConsumer represents a single Kafka consumer instance.
+
+It is responsible for:
+  - Polling messages from a Kafka topic.
+  - Processing messages and saving them to storage.
+  - Handling retries for message processing and offset commits.
+  - Sending failed messages to a dead-letter queue (DLQ).
+  - Logging critical errors and notifying via a notifier.
+  - Self-termination if unrecoverable errors occur.
+
+KafkaConsumer is typically managed and monitored by the App orchestration layer.
+*/
 type KafkaConsumer struct {
-	consumer                 *kafka.Consumer
-	handler                  *Handler
-	dlq                      *KafkaProducer
-	dlqTopic                 string
-	saveOrderRetryDelay      time.Duration
-	saveOrderRetryMax        int
-	commitRetryDelay         time.Duration
-	commitRetryMax           int
-	eventTypeErrorsMax       int
-	eventTypeErrorRetryDelay time.Duration
-	notifier                 notifier.Notifier
+	consumer                 *kafka.Consumer   // underlying Kafka consumer
+	handler                  *Handler          // message handler for processing orders
+	dlq                      *KafkaProducer    // producer for dead-letter queue
+	dlqTopic                 string            // DLQ topic name
+	saveOrderRetryDelay      time.Duration     // delay between retries when saving order fails
+	saveOrderRetryMax        int               // maximum retries for saving an order
+	commitRetryDelay         time.Duration     // delay between retries when committing offset
+	commitRetryMax           int               // maximum retries for committing offset
+	eventTypeErrorsMax       int               // max consecutive broker errors before panic
+	eventTypeErrorRetryDelay time.Duration     // delay after broker error before retry
+	notifier                 notifier.Notifier // notifier for critical errors
 }
 
+/*
+NewConsumer creates a new KafkaConsumer instance with the provided configuration.
+
+It initializes:
+  - A Kafka consumer connected to the specified topic.
+  - A DLQ producer for handling failed messages.
+  - A handler for processing messages.
+  - A notifier for critical errors.
+
+Returns the fully initialized KafkaConsumer or an error if setup fails.
+*/
 func NewConsumer(config configs.Consumer, logger logger.Logger) (*KafkaConsumer, error) {
 	kafkaConsumer, err := kafka.NewConsumer(toMap(config))
 	if err != nil {
@@ -54,6 +89,12 @@ func NewConsumer(config configs.Consumer, logger logger.Logger) (*KafkaConsumer,
 		notifier:                 notifier.NewNotifier(config.Notifier)}, nil
 }
 
+/*
+toMap converts a consumer or producer configuration into a Kafka ConfigMap.
+
+This helper function maps internal configuration structs to
+the format expected by the Confluent Kafka Go client.
+*/
 func toMap(config any) *kafka.ConfigMap {
 	switch c := config.(type) {
 	case configs.Consumer:
@@ -92,6 +133,17 @@ func toMap(config any) *kafka.ConfigMap {
 	}
 }
 
+/*
+Run starts the KafkaConsumer loop for a single worker.
+
+Behavior:
+  - Polls messages from Kafka continuously.
+  - Processes each message with retries.
+  - Commits offsets with retries.
+  - Sends messages to DLQ if processing fails.
+  - Logs errors and triggers notifier notifications for critical errors.
+  - Panics for unrecoverable errors, which may trigger worker self-termination.
+*/
 func (c *KafkaConsumer) Run(ctx context.Context, storage repository.Storage, logger logger.Logger, workerID int) {
 	logger.LogInfo(fmt.Sprintf("worker %d — receiving orders", workerID), "layer", "broker.kafka")
 	eventTypeErrors := 0
@@ -143,6 +195,12 @@ func (c *KafkaConsumer) Run(ctx context.Context, storage repository.Storage, log
 	}
 }
 
+/*
+commitWithRetry attempts to commit a Kafka message offset multiple times.
+
+It retries up to commitRetryMax times with a configured delay between attempts.
+Returns an error if the commit fails after all retries.
+*/
 func (c *KafkaConsumer) commitWithRetry(msg *kafka.Message) error {
 	var err error
 	for range c.commitRetryMax {
@@ -155,6 +213,17 @@ func (c *KafkaConsumer) commitWithRetry(msg *kafka.Message) error {
 	return fmt.Errorf("failed to commit offset after %d attempts: %w", c.commitRetryMax, err)
 }
 
+/*
+sendToDLQ sends a failed message to the dead-letter queue (DLQ).
+
+It attempts to produce the message to the DLQ and commit its offset.
+If either action fails, it logs the error, notifies via the notifier,
+and panics to trigger worker self-termination.
+
+This self-termination ensures that the worker does not keep consuming CPU
+in a tight loop when Kafka is down or offset commits repeatedly fail,
+allowing the orchestration layer to handle restart or shutdown.
+*/
 func (c *KafkaConsumer) sendToDLQ(eventType *kafka.Message, retryCnt int, workerID int) {
 	headers := make(map[string]string)
 	msg := configs.Message{
@@ -177,10 +246,23 @@ func (c *KafkaConsumer) sendToDLQ(eventType *kafka.Message, retryCnt int, worker
 	}
 }
 
+/*
+ToStr converts a Kafka message key from bytes to a trimmed string.
+
+Kafka message keys may arrive with surrounding quotes. This function trims them
+so that the key appears consistent in logs, matching the format of order UIDs
+used elsewhere in the application.
+*/
 func ToStr(key []byte) string {
 	return strings.Trim(string(key), `"`)
 }
 
+/*
+Close terminates the Kafka consumer instance.
+
+It releases all resources, stops receiving messages,
+and logs any errors encountered during shutdown.
+*/
 func (c *KafkaConsumer) Close(logger logger.Logger) {
 	if err := c.consumer.Close(); err != nil {
 		logger.LogError("consumer — failed to stop properly", err, "layer", "broker.kafka")

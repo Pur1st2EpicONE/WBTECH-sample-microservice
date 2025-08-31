@@ -40,9 +40,10 @@ func TestKafkaConsumer_Integration(t *testing.T) {
 			CommitRetryDelay:    100 * time.Millisecond,
 			CommitRetryMax:      2,
 			DLQ: configs.Producer{
-				Brokers:  []string{"localhost:9092"},
-				Topic:    "test-dlq",
-				ClientID: "dlq-client",
+				Brokers:       []string{"localhost:9092"},
+				Topic:         "test-dlq",
+				ClientID:      "dlq-client",
+				RetryAttempts: 5,
 				Kafka: &configs.KafkaProducer{
 					Retries:           1,
 					CompressionType:   "none",

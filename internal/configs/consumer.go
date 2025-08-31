@@ -6,6 +6,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Consumer holds configuration for a message consumer.
+//
+// Includes Kafka connection settings, topic info, retry policies,
+// and references to a DLQ producer and notifier.
 type Consumer struct {
 	Brokers                  []string
 	Topic                    string
@@ -25,6 +29,10 @@ type Consumer struct {
 	Kafka                    *Kafka // interchangeable
 }
 
+// Kafka contains Kafka-specific configuration options.
+//
+// Allows adjusting commit behavior, offset reset policy, retries,
+// and other low-level Kafka parameters.
 type Kafka struct {
 	EnableAutoCommit    bool
 	AutoOffsetReset     string
@@ -67,6 +75,9 @@ func kafkaConfig() *Kafka {
 	}
 }
 
+// dlqConfig holds configuration for a DLQ.
+//
+// Includes broker list, topic, client ID, and optional Kafka-specific options.
 func dlqConfig() Producer {
 	return Producer{
 		Brokers:  viper.GetStringSlice("kafka.dlq.brokers"),
