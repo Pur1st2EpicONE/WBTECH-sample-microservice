@@ -80,10 +80,14 @@ func kafkaConfig() *Kafka {
 // Includes broker list, topic, client ID, and optional Kafka-specific options.
 func dlqConfig() Producer {
 	return Producer{
-		Brokers:  viper.GetStringSlice("kafka.dlq.brokers"),
-		Topic:    viper.GetString("kafka.dlq.topic"),
-		ClientID: viper.GetString("kafka.dlq.client_id"),
-		Kafka:    kafkaDlqConfig(),
+		Brokers:           viper.GetStringSlice("kafka.dlq.brokers"),
+		Topic:             viper.GetString("kafka.dlq.topic"),
+		FlushTimeOut:      viper.GetInt("kafka.dlq.flush_time_out_ms"),
+		ClientID:          viper.GetString("kafka.dlq.client_id"),
+		RetryAttempts:     viper.GetInt("kafka.dlq.produce_retry_attempts"),
+		ProduceRetryDelay: viper.GetDuration("kafka.dlq.produce_retry_delay"),
+		EventTimeout:      viper.GetDuration("kafka.dlq.event_timeout"),
+		Kafka:             kafkaDlqConfig(),
 	}
 }
 

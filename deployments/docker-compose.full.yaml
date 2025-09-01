@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: Neo
+      POSTGRES_PASSWORD: "0451"
+      POSTGRES_DB: wb-service-db
+    ports:
+      - 5433:5432
+    volumes:
+      - ./schema:/docker-entrypoint-initdb.d
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U Neo -d wb-service-db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  kafka:
+    image: apache/kafka:4.0.1-rc0
+    container_name: kafka
+    ports:
+      - 9092:9092  
+      - 9093:9093  
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  kafka-init:
+    image: apache/kafka:4.0.1-rc0
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Waiting for Kafka to be ready';
+      until nc -z kafka 9092; do sleep 1; done;
+      echo 'Kafka is up, creating topic';
+      /opt/kafka/bin/kafka-topics.sh --create --topic orders --bootstrap-server kafka:9092 --partitions 1 --replication-factor 1;
+      echo 'Kafka topic created';
+      "
+    restart: "no"
+
+  wb-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wb-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      - CONFIG_PATH=/app/config.yaml
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./logs:/app/logs
+      - ./web/templates:/app/web/templates
+      - ./web/static:/app/web/static
+    ports:
+      - 8081:8081

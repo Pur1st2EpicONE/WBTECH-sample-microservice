@@ -32,9 +32,14 @@ func main() {
 		logger.LogFatal("producer — creation failed", err)
 	}
 
-	checkArgs(&config.MsgsToSend, logger)
-	orders := order.GetOrders(config.MsgsToSend, logger)
+	sendBadOrder := checkArgs(&config.MsgsToSend)
+	if sendBadOrder {
+		logger.LogInfo("order-producer — sending bad order to Kafka ( b563feb7b2b84b6test )")
+		producer.Produce(sendBad())
+		return
+	}
 
+	orders := order.GetOrders(config.MsgsToSend, logger)
 	for i, order := range orders {
 		orderJSON, err := json.MarshalIndent(order, "", "   ")
 		if err != nil {
@@ -44,39 +49,27 @@ func main() {
 		if err != nil {
 			logger.LogFatal("producer — failed to marshal key", err)
 		}
-		logger.LogInfo(fmt.Sprintf("order-producer — sending order %d to Kafka", i+1))
+		logger.LogInfo(fmt.Sprintf("order-producer — sending order %s to Kafka", orders[i].OrderUID))
 		msg := configs.Message{Topic: config.Topic, Key: keyJSON, Value: orderJSON}
 		producer.Produce(msg)
 	}
-	logger.LogInfo("order-producer — sending bad order to Kafka")
-	producer.Produce(sendBad())
-	orders = order.GetOrders(config.MsgsToSend, logger)
-	for i, order := range orders {
-		orderJSON, err := json.MarshalIndent(order, "", "   ")
-		if err != nil {
-			logger.LogFatal("producer — failed to marshal order with indent", err)
-		}
-		keyJSON, err := json.Marshal(order.OrderUID)
-		if err != nil {
-			logger.LogFatal("producer — failed to marshal key", err)
-		}
-		logger.LogInfo(fmt.Sprintf("order-producer — sending order %d to Kafka", i+1))
-		msg := configs.Message{Topic: config.Topic, Key: keyJSON, Value: orderJSON}
-		producer.Produce(msg)
-	}
+
 	producer.Close()
 }
 
-func checkArgs(amount *int, logger logger.Logger) {
+func checkArgs(amount *int) bool {
 	if len(os.Args) > 1 {
+		if os.Args[1] == "bad" {
+			return true
+		}
 		newAmount, err := strconv.Atoi(os.Args[1])
 		if err != nil {
-			logger.LogError("producer — failed to convert argument to string", err)
 			*amount = 10
 		} else {
 			*amount = newAmount
 		}
 	}
+	return false
 }
 
 func sendBad() configs.Message {
