@@ -34,8 +34,9 @@ func main() {
 
 	sendBadOrder := checkArgs(&config.MsgsToSend)
 	if sendBadOrder {
-		logger.LogInfo("order-producer — sending bad order to Kafka ( b563feb7b2b84b6test )")
+		logger.LogInfo("order-producer — sending bad order to Kafka — b563feb7b2b84b6test")
 		producer.Produce(sendBad())
+		producer.Close()
 		return
 	}
 
