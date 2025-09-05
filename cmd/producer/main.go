@@ -1,6 +1,7 @@
-// This is a standalone Kafka producer for testing purposes.
-// Everything inside this package is not part of the main service and
-// is just quick-and-dirty code to generate and send test orders.
+// Package main implements a standalone Kafka producer for testing.
+//
+// This code is separate from the main service and is used only to generate
+// and send test orders.
 package main
 
 import (

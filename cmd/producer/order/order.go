@@ -1,3 +1,8 @@
+// Package order provides functions to generate mock orders for testing or
+// demonstration purposes.
+//
+// It includes utilities to create complete orders with delivery, payment,
+// and item details, with randomized values.
 package order
 
 import (

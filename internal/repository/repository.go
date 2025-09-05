@@ -1,3 +1,11 @@
+// Package repository provides abstractions for storing and retrieving orders from a database.
+//
+// It defines the Storage interface, which exposes methods for saving,
+// fetching, and listing orders, as well as managing the database connection.
+//
+// Currently, a Postgres implementation is provided under the internal/repository/postgres package.
+// The package also includes helper functions for connecting to the database
+// and configuring connection pool settings.
 package repository
 
 import (

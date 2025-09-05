@@ -285,7 +285,7 @@ func (a *App) runWorker(workerID int) {
 Wait blocks until all application components shut down.
 
 Steps:
- 1. Waits for the root context cancellation (shutdown signal).
+ 1. Waits for the root context cancellation (ctx acts as a blocking point to prevent premature main exit).
  2. Waits for all goroutines (server, consumer, workers, cache cleaner) to finish.
  3. Closes the storage (DB connection).
  4. Closes the log file if one was used.

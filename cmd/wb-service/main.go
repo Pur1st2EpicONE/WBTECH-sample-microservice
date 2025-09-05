@@ -1,3 +1,4 @@
+// Package main initializes and runs the service.
 package main
 
 import (

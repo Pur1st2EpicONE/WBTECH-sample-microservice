@@ -25,7 +25,7 @@ cache:
   cache_size: 10                       # Max number of orders to keep in cache
   background_cleanup: true             # Run periodic cleanup of expired cache entries
   cleanup_period: 15s                  # Interval between cache cleanups
-  clnr_pause_on_db_conn_check: 5s      # Pause cleanup during DB connection check
+  clnr_pause_on_db_conn_check: 5s      # Interval between DB connection checks while paused
   order_ttl: 20s                       # Time-to-live for cached orders
 
 # Database connection settings

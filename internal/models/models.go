@@ -1,3 +1,8 @@
+// Package models defines the core data structures used in the service,
+// including orders along with their delivery and payment details, and individual items.
+//
+// These structs represent the shape of JSON payloads for orders and
+// include validation tags to ensure data integrity.
 package models
 
 import "time"
