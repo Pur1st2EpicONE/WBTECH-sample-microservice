@@ -19,10 +19,10 @@ down:
 	@rm -f .env
 
 orders:
-	@docker exec -it wb-service ./producer
+	@docker exec wb-service ./producer
 
 bad-order:
-	@docker exec -it wb-service ./producer bad
+	@docker exec wb-service ./producer bad
 
 local: local-compose db-load migrate-up create-topic app
 
@@ -91,7 +91,7 @@ test:
 	@rm -f coverage_res.out
 	@rm -f ./internal/configs/.env
 	@rm -f ./internal/configs/config.yaml	
-	@docker compose -f docker-compose.dev.yaml down
+	@docker-compose -f docker-compose.dev.yaml down
 	@rm -f ./docker-compose.dev.yaml up	
 	@rm -f ./config.yaml
 

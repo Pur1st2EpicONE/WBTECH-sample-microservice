@@ -6,9 +6,9 @@ app:
   workers: 
     active_consumer_workers: 3      # Number of active Kafka consumer workers
     restart_on_panic: true          # Restart worker if it panics
-    restart_delay: 1s               # Delay before restarting a panicked worker
+    restart_delay: 5s               # Delay before restarting a panicked worker
   db:
-    connection_check_interval: 3s       # Interval between database connection health checks
+    connection_check_interval: 5s       # Interval between database connection health checks
     max_rtrs_bfr_cache_only_mode: 3     # Max retries before switching to cache-only mode
 
 # HTTP server configuration
@@ -24,9 +24,9 @@ cache:
   save_in_cache: true                  # Enable caching of orders
   cache_size: 10                       # Max number of orders to keep in cache
   background_cleanup: true             # Run periodic cleanup of expired cache entries
-  cleanup_period: 15s                  # Interval between cache cleanups
+  cleanup_period: 40s                  # Interval between cache cleanups
   clnr_pause_on_db_conn_check: 5s      # Interval between DB connection checks while paused
-  order_ttl: 20s                       # Time-to-live for cached orders
+  order_ttl: 30s                       # Time-to-live for cached orders
 
 # Database connection settings
 database:
@@ -91,7 +91,8 @@ kafka:
     enable_idempotence: true           # Idempotent producer to prevent duplicates
     flush_time_out_ms: 5000            # Maximum time to wait for flush
 
-# Notifier settings
+# Notifier configuration
 notifier:
   telegram:
-    chat_id: "805862991"      # Telegram chat ID for sending notifications
+    chat_id: "805862991"      # Your own Telegram chat ID is required to receive notifications.
+                              # And don't forget to provide bot token in .env.example.
