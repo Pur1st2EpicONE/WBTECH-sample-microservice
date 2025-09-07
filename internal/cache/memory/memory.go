@@ -24,14 +24,14 @@ import (
 
 // Cache is an in-memory cache for orders with optional background cleanup.
 type Cache struct {
-	bgCleanup     bool         // whether background cleanup is enabled
-	mu            sync.RWMutex // protects access to cachedOrders
-	cachedOrders  map[string]*CachedOrder
-	orderTTL      time.Duration // time-to-live for cached orders
-	queue         *Queue        // ring buffer to track order insertion for eviction
-	cleanupPeriod time.Duration // interval between cleanup cycles
-	pauseCleaner  bool          // indicates if cleaner is paused (e.g., DB disconnected)
-	pauseDuration time.Duration // how long to sleep when cleaner is paused
+	bgCleanup       bool         // whether background cleanup is enabled
+	mu              sync.RWMutex // protects access to cachedOrders
+	cachedOrders    map[string]*CachedOrder
+	orderTTL        time.Duration // time-to-live for cached orders
+	queue           *Queue        // ring buffer to track order insertion for eviction
+	cleanupInterval time.Duration // interval between cleanup cycles
+	pauseCleaner    bool          // indicates if cleaner is paused (e.g., DB disconnected)
+	pauseDuration   time.Duration // how long to sleep when cleaner is paused
 }
 
 // NewCache creates a new in-memory cache and preloads it with recent orders
@@ -57,12 +57,12 @@ func NewCache(storage repository.Storage, config configs.Cache, logger logger.Lo
 	}
 
 	return &Cache{
-		bgCleanup:     config.BgCleanup,
-		cachedOrders:  cachedOrders,
-		orderTTL:      config.OrderTTL,
-		queue:         queue,
-		cleanupPeriod: config.CleanupPeriod,
-		pauseDuration: config.PauseDuration,
+		bgCleanup:       config.BgCleanup,
+		cachedOrders:    cachedOrders,
+		orderTTL:        config.OrderTTL,
+		queue:           queue,
+		cleanupInterval: config.CleanupInterval,
+		pauseDuration:   config.PauseDuration,
 	}
 }
 
@@ -168,7 +168,7 @@ func (c *Cache) CacheCleaner(ctx context.Context, logger logger.Logger, dbStatus
 	if !c.bgCleanup {
 		return
 	}
-	ticker := time.NewTicker(c.cleanupPeriod)
+	ticker := time.NewTicker(c.cleanupInterval)
 	defer ticker.Stop()
 	logger.LogInfo("cache — cleaner started", "layer", "cache.memory")
 	for {

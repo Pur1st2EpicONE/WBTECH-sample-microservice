@@ -10,27 +10,27 @@ import (
 //
 // Includes connection info, topic, retry policy, batching, and optional Kafka-specific settings.
 type Producer struct {
-	Brokers           []string
-	Topic             string
-	ClientID          string
-	MsgsToSend        int
-	FlushTimeOut      int
-	RetryAttempts     int
-	ProduceRetryDelay time.Duration
-	EventTimeout      time.Duration
-	Kafka             *KafkaProducer
+	Brokers           []string       // list of Kafka brokers for the producer
+	Topic             string         // topic to produce messages to
+	ClientID          string         // producer client ID
+	MsgsToSend        int            // number of messages (orders) to send (order-producer-specific)
+	FlushTimeOut      int            // maximum time to wait for message flush
+	RetryAttempts     int            // number of application-level retry attempts
+	ProduceRetryDelay time.Duration  // delay between application-level retry attempts
+	EventTimeout      time.Duration  // overall timeout for event processing
+	Kafka             *KafkaProducer // Kafka-specific producer parameters
 }
 
 // KafkaProducer stores Kafka-specific producer parameters.
 //
 // Configures acknowledgements, idempotence, retries, batching, and compression.
 type KafkaProducer struct {
-	Acks              string
-	EnableIdempotence bool
-	Retries           int
-	LingerMs          int
-	BatchSize         int
-	CompressionType   string
+	Acks              string // wait for all in-sync replicas to acknowledge
+	EnableIdempotence bool   // number of replicas that must acknowledge writes
+	Retries           int    // maximum number of automatic retry attempts by Kafka library
+	LingerMs          int    // time to wait before sending a batch
+	BatchSize         int    // maximum batch size in bytes
+	CompressionType   string // compression algorithm for messages
 }
 
 // Message represents a Kafka message payload.
@@ -70,10 +70,10 @@ func ProdConfig() (Producer, error) {
 func kafkaProdConfig() *KafkaProducer {
 	return &KafkaProducer{
 		Acks:              viper.GetString("kafka.producer.acks"),
+		EnableIdempotence: viper.GetBool("kafka.producer.enable_idempotence"),
 		Retries:           viper.GetInt("kafka.producer.retry_max"),
 		LingerMs:          viper.GetInt("kafka.producer.linger_ms"),
 		BatchSize:         viper.GetInt("kafka.producer.batch_size"),
 		CompressionType:   viper.GetString("kafka.producer.compression_type"),
-		EnableIdempotence: viper.GetBool("kafka.producer.enable_idempotence"),
 	}
 }

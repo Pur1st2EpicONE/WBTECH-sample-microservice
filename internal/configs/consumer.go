@@ -82,8 +82,8 @@ func dlqConfig() Producer {
 	return Producer{
 		Brokers:           viper.GetStringSlice("kafka.dlq.brokers"),
 		Topic:             viper.GetString("kafka.dlq.topic"),
-		FlushTimeOut:      viper.GetInt("kafka.dlq.flush_time_out_ms"),
 		ClientID:          viper.GetString("kafka.dlq.client_id"),
+		FlushTimeOut:      viper.GetInt("kafka.dlq.flush_time_out_ms"),
 		RetryAttempts:     viper.GetInt("kafka.dlq.produce_retry_attempts"),
 		ProduceRetryDelay: viper.GetDuration("kafka.dlq.produce_retry_delay"),
 		EventTimeout:      viper.GetDuration("kafka.dlq.event_timeout"),
@@ -94,10 +94,10 @@ func dlqConfig() Producer {
 func kafkaDlqConfig() *KafkaProducer {
 	return &KafkaProducer{
 		Acks:              viper.GetString("kafka.dlq.acks"),
+		EnableIdempotence: viper.GetBool("kafka.dlq.enable_idempotence"),
 		Retries:           viper.GetInt("kafka.dlq.retry_max"),
 		LingerMs:          viper.GetInt("kafka.dlq.linger_ms"),
 		BatchSize:         viper.GetInt("kafka.dlq.batch_size"),
 		CompressionType:   viper.GetString("kafka.dlq.compression_type"),
-		EnableIdempotence: viper.GetBool("kafka.dlq.enable_idempotence"),
 	}
 }

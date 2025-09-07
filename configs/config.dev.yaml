@@ -24,7 +24,7 @@ cache:
   save_in_cache: true                  # Enable caching of orders
   cache_size: 10                       # Max number of orders to keep in cache
   background_cleanup: true             # Run periodic cleanup of expired cache entries
-  cleanup_period: 40s                  # Interval between cache cleanups
+  cleanup_interval: 40s                # Interval between cache cleanups
   clnr_pause_on_db_conn_check: 5s      # Interval between DB connection checks while paused
   order_ttl: 30s                       # Time-to-live for cached orders
 
@@ -62,30 +62,34 @@ kafka:
   producer:
     brokers:
       - localhost:9092             # List of Kafka brokers for the producer
-    topic: orders                  # Topic to produce messages to
-    client_id: order-producer      # Producer client ID
-    messages_to_send: 10           # Number of messages to send in one batch
-    acks: all                      # Wait for all in-sync replicas to acknowledge
-    retry_max: 3                   # Max number of retry attempts
+    topic: orders                  # Topic to produce orders to
+    client_id: order-producer      # Orders producer client ID
+    messages_to_send: 10           # Number of messages (orders) to send
+    flush_time_out_ms: 5000        # Maximum time to wait for message flush
+    produce_retry_attempts: 5      # Number of application-level retry attempts for sending order to Kafka
+    produce_retry_delay: 5s        # Delay between application-level retry attempts
+    event_timeout: 5s              # Overall timeout for event processing
+    acks: all                      # Number of replicas that must acknowledge writes (all, -1, 0, 1)
+    retry_max: 3                   # Maximum number of automatic retry attempts by Kafka library
     linger_ms: 5                   # Time to wait before sending a batch
     batch_size: 65536              # Maximum batch size in bytes
     compression_type: snappy       # Compression algorithm for messages
     enable_idempotence: true       # Enable idempotent producer to prevent duplicates
-    flush_time_out_ms: 5000        # Maximum time to wait for flush
-    produce_retry_attempts: 5      # Retry attempts for producing messages
-    produce_retry_delay: 5s        # Delay between produce retries
-    event_timeout: 5s              # Timeout for event processing
-  dlq:                            
+  dlq:                           
     brokers:
-      - localhost:9092                 # Kafka brokers for DLQ
+      - localhost:9092                 # List of Kafka brokers for the DLQ (Dead Letter Queue)
     topic: orders-dlq                  # Topic for failed messages
     client_id: order-dlq-producer      # DLQ producer client ID
-    acks: all                          # Wait for all in-sync replicas
-    retry_max: 3                       # Max retry attempts
-    linger_ms: 5                       # Linger time for batch sending
-    batch_size: 65536                  # Max batch size in bytes
-    compression_type: snappy           # Compression algorithm
-    enable_idempotence: true           # Idempotent producer to prevent duplicates
+    flush_time_out_ms: 5000            # Maximum time to wait for message flush
+    produce_retry_attempts: 5          # Number of application-level retry attempts for sending order to the DLQ
+    produce_retry_delay: 5s            # Delay between application-level retry attempts
+    event_timeout: 5s                  # Overall timeout for event processing
+    acks: all                          # Number of replicas that must acknowledge writes (all, -1, 0, 1)
+    retry_max: 3                       # Maximum number of automatic retry attempts by Kafka library
+    linger_ms: 5                       # Time to wait before sending a batch
+    batch_size: 65536                  # Maximum batch size in bytes
+    compression_type: snappy           # Compression algorithm for messages
+    enable_idempotence: true           # Enable idempotent producer to prevent duplicates
 
 # Notifier configuration
 notifier:

@@ -43,11 +43,11 @@ func TestNewCache_WithStorageMock(t *testing.T) {
 	storageMock.EXPECT().GetOrders(5).Return([]*models.Order{{OrderUID: "1"}, {OrderUID: "2"}}, nil)
 
 	cache := NewCache(storageMock, configs.Cache{
-		SaveInCache:   true,
-		CacheSize:     5,
-		BgCleanup:     false,
-		OrderTTL:      time.Minute,
-		CleanupPeriod: time.Minute,
+		SaveInCache:     true,
+		CacheSize:       5,
+		BgCleanup:       false,
+		OrderTTL:        time.Minute,
+		CleanupInterval: time.Minute,
 	}, mockLogger)
 
 	if len(cache.cachedOrders) != 2 {
@@ -85,11 +85,11 @@ func TestNewCache_StorageError(t *testing.T) {
 	mockLogger.EXPECT().LogError("cache — failed to load orders from database: %v", gomock.Any(), "layer", "cache.memory")
 
 	config := configs.Cache{
-		SaveInCache:   true,
-		CacheSize:     5,
-		BgCleanup:     false,
-		OrderTTL:      time.Minute,
-		CleanupPeriod: time.Minute,
+		SaveInCache:     true,
+		CacheSize:       5,
+		BgCleanup:       false,
+		OrderTTL:        time.Minute,
+		CleanupInterval: time.Minute,
 	}
 
 	cache := NewCache(storageMock, config, mockLogger)
@@ -180,11 +180,11 @@ func TestCacheOrder_NewOrder_Overflow(t *testing.T) {
 	mockStorage := mock_repository.NewMockStorage(controller)
 
 	config := configs.Cache{
-		SaveInCache:   true,
-		CacheSize:     2,
-		BgCleanup:     false,
-		CleanupPeriod: time.Second * 1,
-		OrderTTL:      time.Second * 5,
+		SaveInCache:     true,
+		CacheSize:       2,
+		BgCleanup:       false,
+		CleanupInterval: time.Second * 1,
+		OrderTTL:        time.Second * 5,
 	}
 
 	mockStorage.EXPECT().GetOrders(gomock.Any()).Return([]*models.Order{}, nil).AnyTimes()
@@ -221,11 +221,11 @@ func TestCacheCleaner(t *testing.T) {
 	mockLogger := mock_logger.NewMockLogger(controller)
 
 	cache := &Cache{
-		bgCleanup:     true,
-		cachedOrders:  make(map[string]*CachedOrder),
-		queue:         newQueue(10),
-		orderTTL:      50 * time.Millisecond,
-		cleanupPeriod: 20 * time.Millisecond,
+		bgCleanup:       true,
+		cachedOrders:    make(map[string]*CachedOrder),
+		queue:           newQueue(10),
+		orderTTL:        50 * time.Millisecond,
+		cleanupInterval: 20 * time.Millisecond,
 	}
 
 	mockLogger.EXPECT().LogInfo("cache — order saved", "orderUID", "1", "layer", "cache.memory")
@@ -274,8 +274,8 @@ func TestCacheCleaner_DBDown(t *testing.T) {
 	logger.EXPECT().Debug(gomock.Any(), gomock.Any()).AnyTimes()
 
 	cache := &Cache{
-		bgCleanup:     true,
-		cleanupPeriod: 50 * time.Millisecond,
+		bgCleanup:       true,
+		cleanupInterval: 50 * time.Millisecond,
 		cachedOrders: map[string]*CachedOrder{
 			"1": newCachedOrder(&models.Order{OrderUID: "1"}),
 		},

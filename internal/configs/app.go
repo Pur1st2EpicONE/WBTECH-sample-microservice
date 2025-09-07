@@ -69,12 +69,12 @@ type Database struct {
 
 // Cache contains in-memory caching configuration.
 type Cache struct {
-	SaveInCache   bool          // whether to store orders in memory
-	CacheSize     int           // maximum number of orders to cache
-	BgCleanup     bool          // whether background cleaner is enabled
-	CleanupPeriod time.Duration // period between cleanup cycles
-	OrderTTL      time.Duration // time-to-live for cached orders
-	PauseDuration time.Duration // pause duration when DB is unreachable
+	SaveInCache     bool          // whether to store orders in memory
+	CacheSize       int           // maximum number of orders to cache
+	BgCleanup       bool          // whether background cleaner is enabled
+	CleanupInterval time.Duration // period between cleanup cycles
+	OrderTTL        time.Duration // time-to-live for cached orders
+	PauseDuration   time.Duration // pause duration when DB is unreachable
 }
 
 // Logger defines logging configuration.
@@ -155,12 +155,12 @@ func dbConfig() Database {
 // cacheConfig reads cache settings from viper.
 func cacheConfig() Cache {
 	return Cache{
-		SaveInCache:   viper.GetBool("cache.save_in_cache"),
-		CacheSize:     viper.GetInt("cache.cache_size"),
-		BgCleanup:     viper.GetBool("cache.background_cleanup"),
-		CleanupPeriod: viper.GetDuration("cache.cleanup_period"),
-		OrderTTL:      viper.GetDuration("cache.order_ttl"),
-		PauseDuration: viper.GetDuration("cache.clnr_pause_on_db_conn_check"),
+		SaveInCache:     viper.GetBool("cache.save_in_cache"),
+		CacheSize:       viper.GetInt("cache.cache_size"),
+		BgCleanup:       viper.GetBool("cache.background_cleanup"),
+		CleanupInterval: viper.GetDuration("cache.cleanup_interval"),
+		OrderTTL:        viper.GetDuration("cache.order_ttl"),
+		PauseDuration:   viper.GetDuration("cache.clnr_pause_on_db_conn_check"),
 	}
 }
 

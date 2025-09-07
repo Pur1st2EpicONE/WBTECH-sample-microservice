@@ -114,7 +114,7 @@ func newTrackNumber() string {
 	letters := []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	bytes := make([]byte, 9)
 	rand.Read(bytes)
-	for i := 0; i < 9; i++ {
+	for i := range 9 {
 		bytes[i] = letters[int(bytes[i])%len(letters)]
 	}
 	return "WBILM" + string(bytes)
@@ -171,7 +171,7 @@ func newSmID(logger logger.Logger) int {
 	if err != nil {
 		logger.LogFatal("newSmID — failed to create random number", err)
 	}
-	return int(id.Int64())
+	return int(id.Int64()) + 1
 }
 
 func newDateCreated() time.Time {
@@ -343,7 +343,7 @@ func newDeliveryCost(logger logger.Logger) float64 {
 	if err != nil {
 		logger.LogFatal("newDeliveryCost — failed to create random number", err)
 	}
-	return float64(cost.Int64()) / 100.0
+	return (float64(cost.Int64()) / 100.0) + 1
 }
 
 func newGoodsTotal(logger logger.Logger) float64 {
@@ -378,7 +378,7 @@ func newChrtId(logger logger.Logger) int {
 	if err != nil {
 		logger.LogFatal("newChrtId — failed to create random number", err)
 	}
-	return int(id.Int64())
+	return (int(id.Int64())) + 1
 }
 
 func newPrice(logger logger.Logger) float64 {
@@ -386,7 +386,7 @@ func newPrice(logger logger.Logger) float64 {
 	if err != nil {
 		logger.LogFatal("newPrice — failed to create random number", err)
 	}
-	return float64(price.Int64())
+	return (float64(price.Int64())) + 1
 }
 
 func newRid() string {
@@ -470,7 +470,7 @@ func newSize(logger logger.Logger) string {
 }
 
 func newTotalPrice(price float64, sale int) float64 {
-	return price * (1 - float64(sale)/100)
+	return (price * (1 - float64(sale)/100)) + 1
 }
 
 func newNmId(logger logger.Logger) int {
@@ -478,7 +478,7 @@ func newNmId(logger logger.Logger) int {
 	if err != nil {
 		logger.LogFatal("newNmId — failed to create random number", err)
 	}
-	return int(number.Int64())
+	return int(number.Int64()) + 1
 }
 
 func newBrand(logger logger.Logger) string {
@@ -504,5 +504,40 @@ func newStatus(logger logger.Logger) int {
 	if err != nil {
 		logger.LogFatal("newStatus — failed to generate random index", err)
 	}
-	return int(number.Int64())
+	return statuses[number.Uint64()]
+}
+
+func CreateBadOrder(logger logger.Logger) models.Order {
+	order := CreateOrder(logger)
+	spoil(&order)
+	return order
+}
+
+func spoil(order *models.Order) {
+	n, _ := rand.Int(rand.Reader, big.NewInt(10))
+	number := int(n.Int64()) + 1
+	switch number {
+	case 1:
+		order.CustomerID = "thisIsBAAAAD!@$!)(@%R$)"
+	case 2:
+		order.Delivery.Name = "@b0bUs"
+	case 3:
+		order.Delivery.Email = "chain mail"
+	case 4:
+		order.Payment.Currency = "credits"
+	case 5:
+		order.Payment.GoodsTotal = -1
+	case 6:
+		order.Payment.CustomFee = -1
+	case 7:
+		order.Items[0].Status = 777
+	case 8:
+		order.Items[0].Sale = 101
+	case 9:
+		order.OofShard = "I have no idea what OofShard is. Roblox death sound?"
+	case 10:
+		order.Delivery.Zip = "RAR"
+	case 11:
+		order.OrderUID = ""
+	}
 }

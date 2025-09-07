@@ -1,7 +1,7 @@
 ![wb-service banner](assets/banner.png)
 <h1>
 
-<h4 align="center">Go-based fault-tolerant web service that processes orders from Kafka, saves them in PostgreSQL, and provides fast in-memory retrieval over HTTP.</h4>
+<h3 align="center">Go-based fault-tolerant web service that processes orders from Kafka, saves them in PostgreSQL, and provides fast in-memory retrieval over HTTP.</h3>
 
 <p align="center">
   <a href="https://pkg.go.dev/github.com/Pur1st2EpicONE/WBTECH-sample-microservice">
@@ -12,10 +12,23 @@
   </a>
   <img src="https://img.shields.io/badge/coverage-70.2%25_-blue?style=flat-square&color=%23007D9C" alt="Coverage">
 </p>
-<h1>
+<br>
+<br>
+<br>
+
+# The easy way
+
+### You can actually just watch this cool video I made about the service's workflow. It describes the installation and main features of the project. After watching it, you might not even need the rest of this page.
+
+[![cool rectangle](assets/video_preview.png)](https://www.youtube.com/watch?v=MKMquUqmJzM)
+
+<br>
+
+# I have no eyes and I must read
+
+<br>
 
 ## Getting Started
-
 ⚠️ Prerequisite:
 This project requires Docker Compose, regardless of how you choose to run it.  
 

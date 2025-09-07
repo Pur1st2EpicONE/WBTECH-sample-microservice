@@ -92,7 +92,7 @@ test:
 	@rm -f ./internal/configs/.env
 	@rm -f ./internal/configs/config.yaml	
 	@docker-compose -f docker-compose.dev.yaml down
-	@rm -f ./docker-compose.dev.yaml up	
+	@rm -f ./docker-compose.dev.yaml 
 	@rm -f ./config.yaml
 
 local-orders:
