@@ -10,7 +10,7 @@
   <a href="https://goreportcard.com/report/github.com/Pur1st2EpicONE/WBTECH-sample-microservice">
     <img alt="Go Report Card" src="https://img.shields.io/badge/go_report-A%2B-blue?style=flat-square&color=%23007D9C">
   </a>
-  <img src="https://img.shields.io/badge/coverage-70.2%25_-blue?style=flat-square&color=%23007D9C" alt="Coverage">
+  <img src="https://img.shields.io/badge/coverage-70.1%25_-blue?style=flat-square&color=%23007D9C" alt="Coverage">
 </p>
 <br>
 <br>

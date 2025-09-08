@@ -8,16 +8,16 @@ app:
     restart_on_panic: true          # Restart worker if it panics
     restart_delay: 5s               # Delay before restarting a panicked worker
   db:
-    connection_check_interval: 5s       # Interval between database connection health checks
-    max_rtrs_bfr_cache_only_mode: 3     # Max retries before switching to cache-only mode
+    connection_check_interval: 5s        # Interval between database connection health checks
+    max_rtrs_bfr_cache_only_mode: 3      # Max retries before switching to cache-only mode
 
 # HTTP server configuration
 server:
-  port: "8081"               # Port where the server will listen
-  read_timeout: 10s          # Max duration for reading request
-  write_timeout: 10s         # Max duration for writing response
-  max_header_bytes: 1048576  # Maximum header size in bytes
-  shutdown_timeout: 5s       # Timeout for graceful server shutdown
+  port: "8081"                   # Port where the server will listen
+  read_timeout: 10s              # Max duration for reading request
+  write_timeout: 10s             # Max duration for writing response
+  max_header_bytes: 1048576      # Maximum header size in bytes
+  shutdown_timeout: 5s           # Timeout for graceful server shutdown
 
 # Cache configuration
 cache:
@@ -59,6 +59,7 @@ kafka:
     commit_retry_max: 3                    # Max number of retries when committing offsets fails
     event_type_errors_max: 3               # Max allowed errors of the same event type before handling
     event_type_error_retry_delay: 10s      # Delay between retries for event type errors
+    db_connection_check_delay: 10s         # Delay between database connection checks when connection errors occur
   producer:
     brokers:
       - kafka:9092                 # List of Kafka brokers for the producer

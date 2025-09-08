@@ -24,6 +24,7 @@ type Consumer struct {
 	CommitRetryMax           int
 	EventTypeErrorsMax       int
 	EventTypeErrorRetryDelay time.Duration
+	DbConnectionCheckDelay   time.Duration
 	DLQ                      Producer
 	Notifier                 Notifier
 	Kafka                    *Kafka // interchangeable
@@ -62,6 +63,7 @@ func consConfig() Consumer {
 		CommitRetryMax:           viper.GetInt("kafka.consumer.commit_retry_max"),
 		EventTypeErrorsMax:       viper.GetInt("kafka.consumer.event_type_errors_max"),
 		EventTypeErrorRetryDelay: viper.GetDuration("kafka.consumer.event_type_error_retry_delay"),
+		DbConnectionCheckDelay:   viper.GetDuration("kafka.consumer.db_connection_check_delay"),
 		DLQ:                      dlqConfig(),
 		Notifier:                 notifierConfig(),
 		Kafka:                    kafkaConfig(),

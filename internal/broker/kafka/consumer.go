@@ -48,6 +48,7 @@ type KafkaConsumer struct {
 	commitRetryMax           int               // maximum retries for committing offset
 	eventTypeErrorsMax       int               // max consecutive broker errors before panic
 	eventTypeErrorRetryDelay time.Duration     // delay after broker error before retry
+	dbConnectionCheckDelay   time.Duration     // delay between database connection checks when connection errors occur
 	notifier                 notifier.Notifier // notifier for critical errors
 }
 
@@ -86,6 +87,7 @@ func NewConsumer(config configs.Consumer, logger logger.Logger) (*KafkaConsumer,
 		commitRetryMax:           config.CommitRetryMax,
 		eventTypeErrorsMax:       config.EventTypeErrorsMax,
 		eventTypeErrorRetryDelay: config.EventTypeErrorRetryDelay,
+		dbConnectionCheckDelay:   config.DbConnectionCheckDelay,
 		notifier:                 notifier.NewNotifier(config.Notifier)}, nil
 }
 
@@ -142,6 +144,7 @@ Behavior:
   - Commits offsets with retries.
   - Sends messages to DLQ if processing fails.
   - Logs errors and triggers notifier notifications for critical errors.
+  - Pauses order processing during database outages with periodic connection checks.
   - Panics for unrecoverable errors, which may trigger worker self-termination.
 */
 func (c *KafkaConsumer) Run(ctx context.Context, storage repository.Storage, logger logger.Logger, workerID int) {
@@ -150,6 +153,7 @@ func (c *KafkaConsumer) Run(ctx context.Context, storage repository.Storage, log
 	for {
 		select {
 		case <-ctx.Done():
+			c.dlq.Close()
 			return
 		default:
 			event := c.consumer.Poll(100)
@@ -158,11 +162,23 @@ func (c *KafkaConsumer) Run(ctx context.Context, storage repository.Storage, log
 			}
 			switch eventType := event.(type) {
 			case *kafka.Message:
+				logger.Debug(fmt.Sprintf("worker %d — received a new order from Kafka, will try saving it", workerID), "workerID", fmt.Sprintf("%d", workerID), "layer", "broker.kafka")
 				eventTypeErrors = 0
 				var lastErr error
+				var notified bool
 				retryCnt := 0
 				for retryCnt < c.saveOrderRetryMax {
 					if err := c.handler.SaveOrder(eventType.Value, storage, logger, workerID); err != nil {
+						if strings.Contains(err.Error(), "connection refused") {
+							if !notified {
+								logger.LogInfo(fmt.Sprintf("worker %d — lost connection to database, order processing paused", workerID), "layer", "broker.kafka")
+								c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — database connection lost, consumer worker %d paused", workerID))
+								notified = true
+							}
+							time.Sleep(c.dbConnectionCheckDelay)
+							continue
+						}
+						notified = false
 						lastErr = err
 						retryCnt++
 						if retryCnt < c.saveOrderRetryMax {
