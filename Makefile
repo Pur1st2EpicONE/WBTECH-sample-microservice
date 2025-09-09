@@ -12,7 +12,14 @@ up:
 	@echo "wb-service is up"
 
 down:
-	docker-compose -f docker-compose.full.yaml down -v --remove-orphans
+	@docker exec -it wb-service sh -c "kill -INT 1"
+	@bash -c 'until [ "$$(docker inspect -f "{{.State.Running}}" wb-service)" = "false" ]; do sleep 10; done'
+	@docker stop kafka
+	@docker stop postgres
+	@docker rm kafka
+	@docker rm postgres
+	@docker rm wb-service
+	@docker rm wbtech-sample-microservice_kafka-init_1
 	@rm -f docker-compose.full.yaml
 	@rm -f Dockerfile
 	@rm -f config.yaml

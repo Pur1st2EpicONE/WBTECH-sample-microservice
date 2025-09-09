@@ -233,6 +233,8 @@ make test
 
 Upon completion, an HTML coverage report will be generated in the project root.
 
+![running tests example gif](assets/running_tests.gif)
+
 <br>
 
 ## Shutting down
