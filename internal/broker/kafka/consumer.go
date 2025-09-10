@@ -15,6 +15,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
@@ -147,13 +148,18 @@ Behavior:
   - Pauses order processing during database outages with periodic connection checks.
   - Panics for unrecoverable errors, which may trigger worker self-termination.
 */
-func (c *KafkaConsumer) Run(ctx context.Context, storage repository.Storage, logger logger.Logger, workerID int) {
+func (c *KafkaConsumer) Run(ctx context.Context, storage repository.Storage, logger logger.Logger, workerID int, lastWorker *atomic.Int32) {
 	logger.LogInfo(fmt.Sprintf("worker %d — receiving orders", workerID), "layer", "broker.kafka")
 	eventTypeErrors := 0
 	for {
 		select {
 		case <-ctx.Done():
-			c.dlq.Close()
+			if lastWorker.Load() == int32(1) { // I do realize how utterly retarded this is
+				c.dlq.Close() // should've delegated DLQ management to the Consumer, not embedded it in each worker
+				logger.LogInfo(fmt.Sprintf("worker %d — DLQ closed", workerID), "workerID", fmt.Sprintf("%d", workerID), "layer", "broker.kafka")
+			} else {
+				lastWorker.Add(-1)
+			}
 			return
 		default:
 			event := c.consumer.Poll(100)

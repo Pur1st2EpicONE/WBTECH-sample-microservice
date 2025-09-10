@@ -3,6 +3,7 @@ package kafka_test
 import (
 	"context"
 	"encoding/json"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -121,7 +122,10 @@ func TestKafkaConsumer_Integration(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	go kc.Run(ctx, storage, log, 1)
+	var lastWorker atomic.Int32
+	lastWorker.Add(2)
+	go kc.Run(ctx, storage, log, 1, &lastWorker)
+	go kc.Run(ctx, storage, log, 2, &lastWorker)
 	producer.Flush(7000)
 
 	time.Sleep(10 * time.Second)

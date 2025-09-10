@@ -18,3 +18,13 @@ func TestTelegram_Notify_HTTPError(t *testing.T) {
 	err := tg.Notify("aboba")
 	require.Error(t, err)
 }
+
+func TestTelegram_Notify_DefaultClient(t *testing.T) {
+	tg := telegram.NewNotifier(configs.Notifier{
+		Token:    "TOKEN",
+		Receiver: "12345",
+	})
+	tg.Client = nil
+	err := tg.Notify("test")
+	require.Error(t, err)
+}

@@ -16,6 +16,7 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -232,9 +233,11 @@ func (a *App) RunConsumer() {
 		<-a.ctx.Done()
 		a.consumer.Close(a.logger)
 	}()
+	var lastWorker atomic.Int32
 	for workerID := 1; workerID < a.workers+1; workerID++ {
 		a.wg.Add(1)
-		go a.runWorker(workerID)
+		lastWorker.Add(1)
+		go a.runWorker(workerID, &lastWorker)
 	}
 }
 
@@ -246,13 +249,13 @@ Errors are logged, and the worker is either restarted or terminated according to
 the configured restart policy. If all workers terminate without restart, an emergency
 shutdown is triggered.
 */
-func (a *App) runWorker(workerID int) {
+func (a *App) runWorker(workerID int, lastWorker *atomic.Int32) {
 	defer a.wg.Done()
 	mu := new(sync.Mutex)
 	for {
 		select {
 		case <-a.ctx.Done():
-			a.logger.LogInfo(fmt.Sprintf("consumer — worker %d shutting down", workerID), "layer", "app")
+			a.logger.LogInfo(fmt.Sprintf("consumer — worker %d stopped", workerID), "layer", "app")
 			return
 		default:
 			func() {
@@ -271,7 +274,7 @@ func (a *App) runWorker(workerID int) {
 						}
 					}
 				}()
-				a.consumer.Run(a.ctx, a.storage, a.logger, workerID)
+				a.consumer.Run(a.ctx, a.storage, a.logger, workerID, lastWorker)
 			}()
 			if !a.restartOnPanic {
 				return

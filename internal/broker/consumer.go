@@ -10,6 +10,7 @@ package broker
 
 import (
 	"context"
+	"sync/atomic"
 
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/broker/kafka"
 	"github.com/Pur1st2EpicONE/WBTECH-sample-microservice/internal/configs"
@@ -28,7 +29,7 @@ A Consumer is responsible for:
 type Consumer interface {
 	// Run starts the consumer loop for a single worker.
 	// It processes messages until the context is cancelled.
-	Run(ctx context.Context, storage repository.Storage, logger logger.Logger, workerID int)
+	Run(ctx context.Context, storage repository.Storage, logger logger.Logger, workerID int, lastWorker *atomic.Int32)
 
 	// Close terminates the consumer and releases any underlying resources.
 	Close(logger logger.Logger)
