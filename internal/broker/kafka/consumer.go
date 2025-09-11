@@ -178,7 +178,7 @@ func (c *KafkaConsumer) Run(ctx context.Context, storage repository.Storage, log
 						if strings.Contains(err.Error(), "connection refused") {
 							if !notified {
 								logger.LogInfo(fmt.Sprintf("worker %d — lost connection to database, order processing paused", workerID), "layer", "broker.kafka")
-								c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — database connection lost, consumer worker %d paused", workerID))
+								_ = c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — database connection lost, consumer worker %d paused", workerID))
 								notified = true
 							}
 							time.Sleep(c.dbConnectionCheckDelay)
@@ -195,7 +195,7 @@ func (c *KafkaConsumer) Run(ctx context.Context, storage repository.Storage, log
 					}
 					if err := c.commitWithRetry(eventType); err != nil {
 						logger.LogError(fmt.Sprintf("worker %d — critical error", workerID), err, "orderUID", ToStr(eventType.Key), "workerID", fmt.Sprintf("%d", workerID), "layer", "broker.kafka")
-						c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — Kafka commit failed\nworkerID=%d\norderUID=%s", workerID, ToStr(eventType.Key)))
+						_ = c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — Kafka commit failed\nworkerID=%d\norderUID=%s", workerID, ToStr(eventType.Key)))
 						panic(fmt.Sprintf("worker self-termination: offset commit failed (workerID=%d, orderUID=%s)", workerID, ToStr(eventType.Key)))
 					}
 					break
@@ -208,7 +208,7 @@ func (c *KafkaConsumer) Run(ctx context.Context, storage repository.Storage, log
 				eventTypeErrors++
 				logger.LogError("consumer — event type error", eventType, "layer", "broker.kafka")
 				if eventTypeErrors > c.eventTypeErrorsMax {
-					c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — Kafka broker is unreachable\nworkerID=%d", workerID))
+					_ = c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — Kafka broker is unreachable\nworkerID=%d", workerID))
 					panic(fmt.Sprintf("worker self-termination: kafka is down (workerID=%d)", workerID))
 				}
 				time.Sleep(c.eventTypeErrorRetryDelay)
@@ -259,11 +259,11 @@ func (c *KafkaConsumer) sendToDLQ(eventType *kafka.Message, retryCnt int, worker
 		WorkerID:  workerID,
 	}
 	if err := c.dlq.Produce(msg); err != nil {
-		c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — failed to send order to DLQ\nworkerID=%d\norderUID=%s", workerID, ToStr(eventType.Key)))
+		_ = c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — failed to send order to DLQ\nworkerID=%d\norderUID=%s", workerID, ToStr(eventType.Key)))
 		panic(fmt.Sprintf("worker self-termination: failed to send order to DLQ (workerID=%d, orderUID=%s)", workerID, ToStr(eventType.Key)))
 	}
 	if err := c.commitWithRetry(eventType); err != nil {
-		c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — order sent to DLQ but offset commit failed\nworkerID=%d\norderUID=%s", workerID, ToStr(eventType.Key)))
+		_ = c.notifier.Notify(fmt.Sprintf("CRITICAL ERROR — order sent to DLQ but offset commit failed\nworkerID=%d\norderUID=%s", workerID, ToStr(eventType.Key)))
 		panic(fmt.Sprintf("worker self-termination: order sent to DLQ but offset commit failed (workerID=%d, orderUID=%s)", workerID, ToStr(eventType.Key)))
 	}
 }

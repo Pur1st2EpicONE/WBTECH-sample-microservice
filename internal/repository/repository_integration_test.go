@@ -37,7 +37,7 @@ func TestConnectDB_Success_Integration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ConnectPostgres failed: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ps := postgres.NewStorage(db, logger)
 
@@ -56,7 +56,7 @@ func TestPostgresStorer_SaveOrder_Integration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to connect to db: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 	ps := repository.NewStorage(db, logger)
@@ -78,7 +78,7 @@ func TestPostgresStorer_GetOrder_Integration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to connect to db: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 	ps := repository.NewStorage(db, logger)
@@ -101,7 +101,7 @@ func TestPostgresStorer_SaveAndGetOrder_Integration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to connect to db: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 	ps := repository.NewStorage(db, logger)
 

@@ -181,7 +181,7 @@ func (a *App) RunCacheCleaner() {
 					}
 				}
 				if !notified {
-					a.notifier.Notify("CRITICAL ERROR — database connection lost\ncache cleaner suspended\nservice is now in cache-only mode")
+					_ = a.notifier.Notify("CRITICAL ERROR — database connection lost\ncache cleaner suspended\nservice is now in cache-only mode")
 					notified = true
 				}
 				dbStatus <- false
@@ -300,6 +300,6 @@ func (a *App) Wait() {
 	a.wg.Wait()
 	a.storage.Close()
 	if a.logFile != nil {
-		a.logFile.Close()
+		_ = a.logFile.Close()
 	}
 }

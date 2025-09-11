@@ -13,29 +13,28 @@ import (
 func (s *Storage) SaveOrder(order *models.Order) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	tx, err := s.db.BeginTx(ctx, nil) // considered adding configurable isolation level via main config, but decided it’s unnecessary — YAGNI
+	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to start transaction: %v", err)
 	}
+	defer func() { _ = tx.Rollback() }()
+
 	orderId, err := insertOrder(ctx, tx, order)
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("failed to insert order: %v", err)
 	}
 	if err := insertDelivery(ctx, tx, &order.Delivery, orderId); err != nil {
-		tx.Rollback()
 		return fmt.Errorf("failed to insert delivery: %v", err)
 	}
 	if err := insertPayment(ctx, tx, &order.Payment, orderId); err != nil {
-		tx.Rollback()
 		return fmt.Errorf("failed to insert payment: %v", err)
 	}
 	for i := range order.Items {
 		if err := insertItem(ctx, tx, &order.Items[i], orderId); err != nil {
-			tx.Rollback()
 			return fmt.Errorf("failed to insert item: %v", err)
 		}
 	}
+
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("transaction commit failed: %v", err)
 	}

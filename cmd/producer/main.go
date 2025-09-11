@@ -46,7 +46,7 @@ func main() {
 			logger.LogFatal("producer — failed to marshal bad order's key", err)
 		}
 		badMsg := configs.Message{Topic: config.Topic, Key: badOrderKeyJSON, Value: badOrderJSON}
-		producer.Produce(badMsg)
+		_ = producer.Produce(badMsg)
 		producer.Close()
 		return
 	}
@@ -63,7 +63,7 @@ func main() {
 		}
 		logger.LogInfo(fmt.Sprintf("order-producer — sending order %s to Kafka", orders[i].OrderUID))
 		msg := configs.Message{Topic: config.Topic, Key: keyJSON, Value: orderJSON}
-		producer.Produce(msg)
+		_ = producer.Produce(msg)
 	}
 	producer.Close()
 }

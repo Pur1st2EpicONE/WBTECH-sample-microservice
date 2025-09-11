@@ -18,7 +18,7 @@ func TestPostgresStorer_SaveOrder_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create mock db: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 	ps := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
 

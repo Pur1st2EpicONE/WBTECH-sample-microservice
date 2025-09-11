@@ -105,7 +105,7 @@ func newItem(order models.Order, logger logger.Logger) models.Item {
 
 func newOderUID() string {
 	bytes := make([]byte, 8)
-	rand.Read(bytes)
+	_, _ = rand.Read(bytes)
 	orderUID := hex.EncodeToString(bytes) + "test"
 	return orderUID
 }
@@ -113,7 +113,7 @@ func newOderUID() string {
 func newTrackNumber() string {
 	letters := []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	bytes := make([]byte, 9)
-	rand.Read(bytes)
+	_, _ = rand.Read(bytes)
 	for i := range 9 {
 		bytes[i] = letters[int(bytes[i])%len(letters)]
 	}
@@ -132,7 +132,7 @@ func newLocale(logger logger.Logger) string {
 
 func newCustomerID() string {
 	bytes := make([]byte, 8)
-	rand.Read(bytes)
+	_, _ = rand.Read(bytes)
 	id := hex.EncodeToString(bytes)
 	return id
 }
@@ -215,7 +215,7 @@ func newName(logger logger.Logger) string {
 func newPhone() string {
 	const digits = "0123456789"
 	bytes := make([]byte, 10)
-	rand.Read(bytes)
+	_, _ = rand.Read(bytes)
 	for i := range bytes {
 		bytes[i] = digits[int(bytes[i])%len(digits)]
 	}
@@ -225,7 +225,7 @@ func newPhone() string {
 func newZip() string {
 	const digits = "0123456789"
 	bytes := make([]byte, 7)
-	rand.Read(bytes)
+	_, _ = rand.Read(bytes)
 	for i := range bytes {
 		bytes[i] = digits[int(bytes[i])%len(digits)]
 	}
@@ -303,7 +303,7 @@ func newRegion(logger logger.Logger) string {
 
 func newEmail() string {
 	bytes := make([]byte, 4)
-	rand.Read(bytes)
+	_, _ = rand.Read(bytes)
 	mail := hex.EncodeToString(bytes) + "@gmail.com"
 	return mail
 }
@@ -391,7 +391,7 @@ func newPrice(logger logger.Logger) float64 {
 
 func newRid() string {
 	bytes := make([]byte, 8)
-	rand.Read(bytes)
+	_, _ = rand.Read(bytes)
 	return hex.EncodeToString(bytes) + "test"
 }
 

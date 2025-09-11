@@ -15,7 +15,7 @@ func TestLogger_toDir(t *testing.T) {
 	tmpDir := t.TempDir()
 	config := configs.Logger{LogDir: tmpDir, Debug: false}
 	firstLog, firstLogFile := slog.NewLogger(config)
-	defer firstLogFile.Close()
+	defer func() { _ = firstLogFile.Close() }()
 
 	firstLog.LogInfo("very informative log")
 

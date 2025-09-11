@@ -17,7 +17,7 @@ func TestPostgresStorer_SaveOrder_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 	s := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
@@ -78,7 +78,7 @@ func TestPostgresStorer_SaveOrder_BeginTxError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 	s := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
@@ -99,7 +99,7 @@ func TestPostgresStorer_InsertOrder_Rollback(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 	s := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
@@ -138,7 +138,7 @@ func TestPostgresStorer_InsertDelivery_Rollback(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 	s := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
@@ -175,7 +175,7 @@ func TestPostgresStorer_InsertPayment_Rollback(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 	s := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
@@ -214,7 +214,7 @@ func TestPostgresStorer_InsertItem_Rollback(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 	s := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
@@ -275,7 +275,7 @@ func TestPostgresStorer_SaveOrder_CommitError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 	s := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)

@@ -17,7 +17,7 @@ func TestPostgresStorer_GetOrder_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open mock db: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 	ps := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
@@ -187,7 +187,7 @@ func TestPostgresStorer_QueryAllButItems_RowsScanError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 	ps := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
@@ -244,7 +244,7 @@ func TestPostgresStorer_QueryItems_RowsScanError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 	ps := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
@@ -407,7 +407,7 @@ func TestPostgresStorer_QueryItems_QueryContextError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open mock db: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 	ps := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
@@ -543,7 +543,7 @@ func TestPostgresStorer_GetOrders_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open mock db: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 	ps := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
@@ -711,7 +711,7 @@ func TestPostgresStorer_GetAllOrders_QueryContextError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open mock db: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 	ps := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)
@@ -767,7 +767,7 @@ func TestPostgresStorer_GetAllOrders_RowsScanError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open mock db: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
 	ps := postgres.NewStorage(sqlx.NewDb(db, "postgres"), logger)

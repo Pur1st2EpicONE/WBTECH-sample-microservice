@@ -18,7 +18,7 @@ func TestServer_RunAndShutdown_WithLogger(t *testing.T) {
 	tmpDir := t.TempDir()
 	config := configs.Logger{LogDir: tmpDir, Debug: false}
 	logger, logFile := logger.NewLogger(config)
-	defer logFile.Close()
+	defer func() { _ = logFile.Close() }()
 
 	handlerCalled := false
 	fakeHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +43,7 @@ func TestServer_RunAndShutdown_WithLogger(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to GET: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected 200 OK, got %d", resp.StatusCode)

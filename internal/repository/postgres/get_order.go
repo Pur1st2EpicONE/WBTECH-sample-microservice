@@ -126,7 +126,7 @@ func queryItems(ctx context.Context, s *Storage, items *[]models.Item, orderId i
 		return err
 	}
 
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	for rows.Next() {
 		var item models.Item
@@ -203,7 +203,7 @@ func (s *Storage) GetOrders(amount ...int) ([]*models.Order, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var orders []*models.Order
 	var orderId int

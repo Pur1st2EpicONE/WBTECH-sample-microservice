@@ -8,8 +8,8 @@ import (
 )
 
 func TestLoad_MissingEnvFile(t *testing.T) {
-	os.Rename(".env", ".env.aboba")
-	defer os.Rename(".env.aboba", ".env")
+	_ = os.Rename(".env", ".env.aboba")
+	defer func() { _ = os.Rename(".env.aboba", ".env") }()
 
 	_, err := configs.Load()
 	if err == nil {
@@ -18,8 +18,8 @@ func TestLoad_MissingEnvFile(t *testing.T) {
 }
 
 func TestLoad_MissingConfigFile(t *testing.T) {
-	os.Rename("config.yaml", "config.yaml.aboba")
-	defer os.Rename("config.yaml.aboba", "config.yaml")
+	_ = os.Rename("config.yaml", "config.yaml.aboba")
+	defer func() { _ = os.Rename("config.yaml.aboba", "config.yaml") }()
 
 	_, err := configs.Load()
 	if err == nil {

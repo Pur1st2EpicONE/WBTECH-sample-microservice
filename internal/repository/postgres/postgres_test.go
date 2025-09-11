@@ -16,7 +16,7 @@ func TestPostgresStorer_Ping(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	xdb := sqlx.NewDb(db, "sqlmock")
 	logger := mock_logger.NewMockLogger(gomock.NewController(t))
@@ -48,7 +48,7 @@ func TestPostgresStorer_Close_Success(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	mock.ExpectClose()
 
 	xdb := sqlx.NewDb(db, "sqlmock")

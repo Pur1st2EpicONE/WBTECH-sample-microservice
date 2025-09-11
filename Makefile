@@ -107,3 +107,6 @@ local-orders:
 
 local-bad-order:
 	go run ./cmd/producer bad
+
+lint:
+	golangci-lint run ./...
