@@ -13,7 +13,7 @@ app:
 
 # HTTP server configuration
 server:
-  port: "8081"                   # Port where the server will listen
+  port: "8081"                   # Port where the server will listen; must match the exposed port in docker-compose.full.yaml
   read_timeout: 10s              # Max duration for reading request
   write_timeout: 10s             # Max duration for writing response
   max_header_bytes: 1048576      # Maximum header size in bytes
@@ -32,7 +32,7 @@ cache:
 database:
   driver: postgres            # Database driver to use 
   host: postgres              # Database host address
-  port: 5432                  # Database port
+  port: 5432                  # Database port; must match the exposed port in docker-compose.full.yaml
   username: Neo               # Database username
   dbname: wb-service-db       # Name of the database to connect to
   sslmode: disable            # SSL mode for the connection 

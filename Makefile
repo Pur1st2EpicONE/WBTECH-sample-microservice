@@ -7,8 +7,8 @@ up:
 	@cp ./configs/config.full.yaml ./config.yaml
 	@cp ./deployments/docker-compose.full.yaml ./docker-compose.full.yaml
 	@cp ./deployments/Dockerfile ./Dockerfile
-	@docker-compose -f docker-compose.full.yaml build --no-cache
-	docker-compose -f docker-compose.full.yaml up -d
+	@docker compose -f docker-compose.full.yaml build
+	docker compose -f docker-compose.full.yaml up -d
 	@echo "wb-service is up"
 
 down:
@@ -19,7 +19,7 @@ down:
 	@docker rm kafka
 	@docker rm postgres
 	@docker rm wb-service
-	@docker rm wbtech-sample-microservice_kafka-init_1
+	@docker rm wbtech-sample-microservice-kafka-init-1
 	@rm -f docker-compose.full.yaml
 	@rm -f Dockerfile
 	@rm -f config.yaml
@@ -37,12 +37,12 @@ local-compose:
 	@cat .env.example > .env
 	@cp ./deployments/docker-compose.dev.yaml ./docker-compose.dev.yaml
 	@cp ./configs/config.dev.yaml ./config.yaml
-	@docker-compose -f docker-compose.dev.yaml up -d postgres kafka
+	@docker compose -f docker-compose.dev.yaml up -d postgres kafka
 	@echo "Waiting for Kafka to start..."
 	@sleep 7
 
 local-down:
-	@docker-compose -f docker-compose.dev.yaml down
+	@docker compose -f docker-compose.dev.yaml down
 	@rm -rf ./logs
 	@rm -f config.yaml
 	@rm -f docker-compose.dev.yaml
@@ -83,7 +83,7 @@ test:
 	@cp ./deployments/docker-compose.dev.yaml ./docker-compose.dev.yaml
 	@cp ./configs/config.dev.yaml ./config.yaml
 	@cat config.yaml > ./internal/configs/config.yaml		
-	@docker-compose -f docker-compose.dev.yaml up -d postgres_test kafka_test
+	@docker compose -f docker-compose.dev.yaml up -d postgres_test kafka_test
 	@until docker exec postgres_test pg_isready -U Neo > /dev/null 2>&1; do sleep 0.5; done
 	@sleep 10
 	@migrate -path ./schema -database 'postgres://Neo:0451@localhost:5434/wb-service-db-test?sslmode=disable' up
@@ -98,7 +98,7 @@ test:
 	@rm -f coverage_res.out
 	@rm -f ./internal/configs/.env
 	@rm -f ./internal/configs/config.yaml	
-	@docker-compose -f docker-compose.dev.yaml down
+	@docker compose -f docker-compose.dev.yaml down
 	@rm -f ./docker-compose.dev.yaml 
 	@rm -f ./config.yaml
 
